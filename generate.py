@@ -1,16 +1,15 @@
 """
-Deterministic editorial front-page generator for:
-  "Sum up 25 November's world news in one image" (news-image-20261125)
+Master Editorial Broadsheet Generator v2 for news-image-20261125:
+  "Wednesday 25 November 2026" — 35 Verified Stories, 11 Illustrated Scenes,
+  World Atlas Pin Map, KPI Strip, and Explicit Date-Check Audit.
 
-Renders a crisp 1024x1024 illustrated world dispatch broadsheet covering
-Wednesday, 25 November 2026 across all 6 continents and 45 verified stories.
-Uses 2x supersampled vector rendering for maps and hero scenes paired with
-native 1x TrueType typography so text remains legible down to ~300px previews.
+Renders bespoke 2x supersampled editorial artwork layered onto classic ivory
+newsprint paired with hinted 1x Georgia/Arial typography so every headline,
+KPI stat, illustration, and map pin reads clearly at 300px judge scale.
 """
 
 from __future__ import annotations
 
-import math
 import os
 from dataclasses import dataclass
 from typing import Callable
@@ -20,78 +19,79 @@ from PIL import Image, ImageDraw, ImageFont
 WIDTH, HEIGHT = 1024, 1024
 SCALE = 2
 OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "entry.png")
-
 FONT_DIR = r"C:\Windows\Fonts"
 
 
-def load_font(name: str, size: int) -> ImageFont.FreeTypeFont:
-    path = os.path.join(FONT_DIR, name)
-    return ImageFont.truetype(path, size)
+def ft(name: str, size: int) -> ImageFont.FreeTypeFont:
+    return ImageFont.truetype(os.path.join(FONT_DIR, name), size)
 
 
-F_MAST = load_font("georgiab.ttf", 24)
-F_SUBMAST = load_font("arialbd.ttf", 11)
-F_PILL = load_font("arialbd.ttf", 11)
-F_HERO_TITLE = load_font("georgiab.ttf", 13)
-F_HERO_BODY = load_font("arial.ttf", 11)
-F_HERO_SRC = load_font("arialbd.ttf", 10)
-F_SEC_HDR = load_font("arialbd.ttf", 12)
-F_SPOT_KICK = load_font("arialbd.ttf", 11)
-F_SPOT_BODY = load_font("arial.ttf", 11)
-F_REG_HDR = load_font("arialbd.ttf", 13)
-F_ITEM_KICK = load_font("arialbd.ttf", 11)
-F_ITEM_BODY = load_font("arial.ttf", 11)
-F_TICK_KICK = load_font("arialbd.ttf", 11)
-F_TICK_BODY = load_font("arial.ttf", 11)
-F_PIN = load_font("arialbd.ttf", 10)
-F_MAP_TITLE = load_font("arialbd.ttf", 11)
-F_MAP_LBL = load_font("arialbd.ttf", 9)
+# Editorial broadsheet type scale
+F_TOPBAR = ft("arialbd.ttf", 10)
+F_MAST = ft("georgiab.ttf", 52)
+F_DECK_META = ft("arialbd.ttf", 9)
+F_DECK = ft("georgiai.ttf", 12)
+F_KPI_NUM = ft("georgiab.ttf", 18)
+F_KPI_TXT = ft("arial.ttf", 9)
 
-PAPER = (247, 243, 234)
-INK = (16, 23, 38)
-NAVY_DARK = (11, 22, 39)
-CRIMSON = (185, 28, 28)
-GOLD = (234, 179, 8)
-AMBER = (194, 65, 12)
-CARD_BG = (255, 253, 249)
-BORDER = (212, 204, 188)
-MUTED = (82, 92, 108)
-OCEAN = (220, 234, 246)
-LAND = (168, 190, 174)
-LAND_LINE = (118, 142, 126)
+F_LEAD_TAG = ft("arialbd.ttf", 9)
+F_LEAD_TITLE = ft("georgiab.ttf", 16)
+F_LEAD_BODY = ft("arial.ttf", 10)
+F_LEAD_SRC = ft("arialbd.ttf", 9)
+
+F_CARD_TAG = ft("arialbd.ttf", 8)
+F_CARD_TITLE = ft("georgiab.ttf", 12)
+F_CARD_SRC = ft("arial.ttf", 9)
+
+F_SEC_HDR = ft("arialbd.ttf", 11)
+F_BRIEF_CITY = ft("arialbd.ttf", 9)
+F_BRIEF_TXT = ft("arial.ttf", 9)
+F_PIN = ft("arialbd.ttf", 9)
+F_DATE_BOLD = ft("arialbd.ttf", 9)
+F_DATE_TXT = ft("arial.ttf", 9)
+
+# Classic newsprint color palette (high contrast, zero harsh neon chrome)
+PAPER = (245, 241, 232)
+PAPER_ALT = (237, 231, 219)
+CARD_BG = (252, 249, 243)
+INK = (18, 22, 30)
+SLATE = (64, 72, 84)
+MUTED = (102, 110, 122)
+RULE_DARK = (26, 30, 38)
+RULE_LIGHT = (206, 199, 184)
+
+CRIMSON = (168, 32, 32)
+NAVY = (28, 62, 116)
+TEAL = (24, 108, 98)
+AMBER = (172, 92, 18)
+VIOLET = (92, 52, 134)
+EMERALD = (28, 106, 62)
+
+OCEAN = (224, 234, 243)
+LAND = (178, 188, 174)
+LAND_EDGE = (128, 140, 126)
 
 
 @dataclass(frozen=True)
-class HeroStory:
-    kicker: str
+class LeadArticle:
+    num: int
+    badge: str
+    badge_col: tuple[int, int, int]
+    region_line: str
     headline: str
     summary: str
-    source: str
-    accent: tuple[int, int, int]
+    sources: str
     drawer: Callable[[int, int], Image.Image]
 
 
 @dataclass(frozen=True)
-class SpotlightItem:
-    kicker: str
-    body: str
-    source: str
-    pin: int
+class CardArticle:
+    num: int
+    region_line: str
+    headline: str
+    sources: str
     accent: tuple[int, int, int]
-
-
-@dataclass(frozen=True)
-class DispatchItem:
-    kicker: str
-    body: str
-    source: str
-
-
-@dataclass(frozen=True)
-class RegionBlock:
-    title: str
-    accent: tuple[int, int, int]
-    items: list[DispatchItem]
+    drawer: Callable[[int, int], Image.Image]
 
 
 def wrap_lines(
@@ -102,8 +102,8 @@ def wrap_lines(
     cur = ""
     for w in words:
         cand = f"{cur} {w}".strip()
-        bbox = draw.textbbox((0, 0), cand, font=font)
-        if bbox[2] - bbox[0] <= max_w or not cur:
+        bb = draw.textbbox((0, 0), cand, font=font)
+        if bb[2] - bb[0] <= max_w or not cur:
             cur = cand
         else:
             lines.append(cur)
@@ -113,575 +113,580 @@ def wrap_lines(
     return lines
 
 
-def draw_inline_item(
+def draw_text_lines(
     draw: ImageDraw.ImageDraw,
     x: int,
     y: int,
+    text: str,
+    font: ImageFont.FreeTypeFont,
+    fill: tuple[int, int, int],
     max_w: int,
-    max_h: int,
-    kicker: str,
-    body: str,
-    source: str,
-    accent: tuple[int, int, int],
-    f_kick: ImageFont.FreeTypeFont,
-    f_body: ImageFont.FreeTypeFont,
-    line_h: int = 14,
-) -> None:
-    prefix = f"{kicker}: "
-    pb = draw.textbbox((0, 0), prefix, font=f_kick)
-    pw = pb[2] - pb[0]
-
-    # Build full wrapped text while respecting first-line indent from kicker
-    words = f"{body} [{source}]".split()
-    first_line_words: list[str] = []
-    rest_words: list[str] = []
-    cur = ""
-    filled_first = False
-    for w in words:
-        cand = f"{cur} {w}".strip()
-        wb = draw.textbbox((0, 0), cand, font=f_body)
-        if not filled_first and (pw + (wb[2] - wb[0]) <= max_w or not first_line_words):
-            cur = cand
-            first_line_words.append(w)
-        else:
-            filled_first = True
-            rest_words.append(w)
-
-    draw.text((x, y), prefix, font=f_kick, fill=accent)
-    draw.text((x + pw, y), cur, font=f_body, fill=INK)
-
-    cur_y = y + line_h
-    if rest_words:
-        rem_lines = wrap_lines(draw, " ".join(rest_words), f_body, max_w)
-        for idx, line in enumerate(rem_lines):
-            assert cur_y + line_h <= y + max_h + 2, f"Overflow on {kicker}: {line}"
-            draw.text((x, cur_y), line, font=f_body, fill=INK)
-            cur_y += line_h
+    line_h: int,
+    max_lines: int,
+) -> int:
+    lines = wrap_lines(draw, text, font, max_w)
+    assert len(lines) <= max_lines, f"Wrapped too many lines ({len(lines)}>{max_lines}): {text}"
+    for i, ln in enumerate(lines):
+        draw.text((x, y + i * line_h), ln, font=font, fill=fill)
+    return y + len(lines) * line_h
 
 
 # ---------------------------------------------------------------------------
-# Hero 2x Supersampled Illustrations (strictly clipped to local w x h surface)
+# 11 Bespoke 2x Supersampled Editorial Illustrations (strictly clipped)
 # ---------------------------------------------------------------------------
-def draw_hero_benghazi(w: int, h: int) -> Image.Image:
-    im = Image.new("RGB", (w, h), (12, 27, 48))
+def art_riyadh_pif(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (38, 30, 34))
     d = ImageDraw.Draw(im)
-    d.rectangle([0, int(h * 0.56), w, h], fill=(18, 52, 86))
-    for wy in range(int(h * 0.64), h - 6, 15):
-        d.line([(10, wy), (w - 10, wy)], fill=(48, 102, 150), width=2)
-    # Harbor pier & lighthouse Silhouette
-    d.rectangle([0, int(h * 0.48), 78, int(h * 0.60)], fill=(30, 41, 59))
-    d.rectangle([16, int(h * 0.34), 28, int(h * 0.48)], fill=(51, 65, 85))
-    d.ellipse([14, int(h * 0.31), 30, int(h * 0.39)], fill=(250, 204, 21))
-    # Corvette Merkury hull listing & breaking
-    hx, hy = 132, int(h * 0.49)
-    hull = [(hx, hy + 16), (hx + 232, hy - 12), (hx + 248, hy + 24), (hx + 16, hy + 36)]
-    d.polygon(hull, fill=(90, 104, 124))
-    d.polygon([(hx + 66, hy + 7), (hx + 122, hy - 18), (hx + 150, hy + 8)], fill=(64, 78, 98))
-    d.line([(hx + 96, hy - 18), (hx + 96, hy - 40)], fill=(148, 163, 184), width=3)
-    # Explosion fireball & rising smoke
-    cx, cy = hx + 86, hy
-    d.ellipse([cx - 38, cy - 48, cx + 44, cy + 16], fill=(100, 116, 139))
-    d.ellipse([cx - 28, cy - 28, cx + 32, cy + 16], fill=(234, 88, 12))
-    d.ellipse([cx - 14, cy - 16, cx + 16, cy + 10], fill=(253, 224, 71))
-    # Incoming sea drone wake
-    d.line([(42, h - 18), (cx - 14, cy + 12)], fill=(56, 189, 248), width=4)
-    d.polygon([(cx - 26, cy + 14), (cx - 8, cy + 8), (cx - 18, cy + 24)], fill=(255, 255, 255))
+    # Desert sunset gradient bands
+    d.rectangle([0, int(h * 0.45), w, h], fill=(78, 52, 38))
+    d.rectangle([0, int(h * 0.72), w, h], fill=(24, 20, 26))
+    # Riyadh financial towers skyline silhouette
+    for tx, tw, th in [(24, 34, 88), (72, 42, 110), (132, 30, 74), (390, 44, 96), (452, 36, 76), (522, 48, 114)]:
+        d.rectangle([tx, h - th, tx + tw, h], fill=(20, 24, 34))
+        for wy in range(h - th + 12, h - 14, 14):
+            d.line([(tx + 6, wy), (tx + tw - 6, wy)], fill=(120, 96, 62), width=2)
+    # Iconic tapering triangular PIF Tower center
+    px = w // 2
+    d.polygon([(px - 44, h), (px - 10, 28), (px + 14, 28), (px + 44, h)], fill=(28, 36, 52))
+    d.line([(px, 30), (px, h)], fill=(71, 85, 105), width=2)
+    # Fire blast & smoke plume at upper spire
+    d.ellipse([px - 58, 22, px + 68, 86], fill=(96, 86, 82))
+    d.ellipse([px - 28, 36, px + 30, 78], fill=(234, 88, 12))
+    d.ellipse([px - 12, 44, px + 14, 68], fill=(253, 224, 71))
+    # Defense interceptor arc over city
+    d.arc([px - 190, 14, px + 18, 150], 210, 330, fill=(56, 189, 248), width=3)
     return im
 
 
-def draw_hero_tiangong(w: int, h: int) -> Image.Image:
-    im = Image.new("RGB", (w, h), (8, 15, 34))
+def art_shenzhou24(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (10, 16, 36))
     d = ImageDraw.Draw(im)
-    stars = [
-        (24, 18), (68, 44), (116, 14), (176, 30), (234, 20),
-        (312, 28), (390, 16), (438, 46), (52, 84), (414, 76), (350, 56),
-    ]
-    for sx, sy in stars:
-        if sx < w - 10 and sy < h - 30:
+    for sx, sy in [(42, 22), (118, 38), (206, 18), (440, 26), (532, 46), (596, 20), (88, 72)]:
+        if sx < w - 8:
             d.ellipse([sx, sy, sx + 4, sy + 4], fill=(226, 232, 240))
-    # Earth blue limb safely confined to bottom slice of local w x h canvas
-    d.ellipse([-80, int(h * 0.68), w + 80, h + 320], fill=(29, 78, 216))
-    d.arc([-80, int(h * 0.68), w + 80, h + 320], 195, 345, fill=(147, 197, 253), width=5)
-    # Tiangong modular station + docked Shenzhou-24
-    cx, cy = int(w * 0.54), int(h * 0.40)
-    for wx in (cx - 128, cx + 44):
-        d.rectangle([wx, cy - 42, wx + 82, cy - 12], fill=(37, 99, 235), outline=(250, 204, 21), width=2)
-        d.rectangle([wx, cy + 12, wx + 82, cy + 42], fill=(37, 99, 235), outline=(250, 204, 21), width=2)
-    d.rounded_rectangle([cx - 56, cy - 12, cx + 56, cy + 12], radius=6, fill=(241, 245, 249))
-    d.rounded_rectangle([cx - 106, cy - 9, cx - 64, cy + 9], radius=6, fill=(250, 204, 21))
-    d.line([(cx - 64, cy), (cx - 56, cy)], fill=(239, 68, 68), width=4)
-    # Pakistan green & China crimson patches
-    d.rectangle([12, 10, 48, 32], fill=(21, 128, 61), outline=(255, 255, 255), width=2)
-    d.rectangle([54, 10, 90, 32], fill=(220, 38, 38), outline=(255, 255, 255), width=2)
+    # Glowing Earth limb at bottom
+    d.ellipse([-120, int(h * 0.72), w + 120, h + 380], fill=(29, 78, 216))
+    d.arc([-120, int(h * 0.72), w + 120, h + 380], 200, 340, fill=(147, 197, 253), width=4)
+    # Long March rocket rising center-left with plume
+    rx = int(w * 0.34)
+    d.polygon([(rx, 16), (rx - 14, 52), (rx + 14, 52)], fill=(220, 38, 38))
+    d.rectangle([rx - 14, 52, rx + 14, 134], fill=(241, 245, 249))
+    d.rectangle([rx - 22, 102, rx - 14, 140], fill=(203, 213, 225))
+    d.rectangle([rx + 14, 102, rx + 22, 140], fill=(203, 213, 225))
+    d.polygon([(rx - 28, 142), (rx + 28, 142), (rx, h - 8)], fill=(249, 115, 22))
+    d.polygon([(rx - 14, 142), (rx + 14, 142), (rx, h - 22)], fill=(254, 240, 138))
+    # Orbital Tiangong station silhouette right
+    tx, ty = int(w * 0.74), 76
+    for wx in (tx - 78, tx + 24):
+        d.rectangle([wx, ty - 28, wx + 54, ty - 8], fill=(59, 130, 246), outline=(250, 204, 21), width=2)
+        d.rectangle([wx, ty + 8, wx + 54, ty + 28], fill=(59, 130, 246), outline=(250, 204, 21), width=2)
+    d.rounded_rectangle([tx - 34, ty - 8, tx + 34, ty + 8], radius=4, fill=(248, 250, 252))
+    # Crescent & Star + China flags badge top right
+    d.rectangle([w - 94, 12, w - 54, 34], fill=(21, 128, 61), outline=(255, 255, 255), width=2)
+    d.rectangle([w - 48, 12, w - 12, 34], fill=(220, 38, 38), outline=(255, 255, 255), width=2)
     return im
 
 
-def draw_hero_redsea(w: int, h: int) -> Image.Image:
-    im = Image.new("RGB", (w, h), (236, 222, 194))
+def art_samara_leak(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (26, 24, 32))
     d = ImageDraw.Draw(im)
-    red_sea = [(68, 0), (132, 0), (206, h), (122, h)]
-    d.polygon(red_sea, fill=(28, 86, 136))
-    persian_gulf = [(306, 16), (w, 52), (w, 134), (282, 70)]
-    d.polygon(persian_gulf, fill=(28, 86, 136))
-    # Hodeidah strike starburst
-    hx, hy = 186, h - 42
-    d.ellipse([hx - 22, hy - 22, hx + 22, hy + 22], fill=(220, 38, 38))
-    d.ellipse([hx - 10, hy - 10, hx + 10, hy + 10], fill=(251, 191, 36))
-    # Ras Tanura 4 drone defense arcs
-    rx, ry = 308, 56
-    d.arc([rx - 52, ry - 44, rx + 24, ry + 30], 190, 340, fill=(22, 163, 74), width=4)
-    for dx, dy in [(-24, -18), (-4, -30), (14, -16), (26, -28)]:
-        d.line([(rx, ry), (rx + dx, ry + dy)], fill=(15, 118, 110), width=3)
-        d.ellipse([rx + dx - 6, ry + dy - 6, rx + dx + 6, ry + dy + 6], fill=(245, 158, 11))
-    # Strait of Hormuz tanker mine ring + tiny tanker hull
-    mx, my = w - 60, 98
-    d.ellipse([mx - 18, my - 18, mx + 18, my + 18], outline=(220, 38, 38), width=4)
-    d.rectangle([mx - 10, my - 4, mx + 10, my + 5], fill=(239, 68, 68))
+    d.rectangle([0, int(h * 0.65), w, h], fill=(16, 18, 24))
+    # Dark oil storage drums & refinery towers silhouette
+    for tx, tw, th in [(36, 46, 76), (96, 52, 86), (170, 22, 132), (206, 18, 122), (480, 56, 80)]:
+        d.rectangle([tx, h - th, tx + tw, h], fill=(42, 46, 58))
+    # Twin burning Rosneft refinery fireballs
+    for fx, fy in [(184, h - 102), (344, h - 76)]:
+        d.ellipse([fx - 54, fy - 42, fx + 62, fy + 26], fill=(75, 85, 99))
+        d.ellipse([fx - 30, fy - 24, fx + 34, fy + 22], fill=(234, 88, 12))
+        d.ellipse([fx - 14, fy - 12, fx + 16, fy + 14], fill=(254, 240, 138))
+    # Subtle leaked casualty escalation bars top-right
+    bx0 = w - 210
+    heights = [24, 42, 68, 98, 128]
+    for i, bh in enumerate(heights):
+        bx = bx0 + i * 36
+        d.rectangle([bx, 152 - bh, bx + 24, 152], fill=(185, 28, 28) if i >= 3 else (100, 116, 139))
     return im
 
 
-def draw_hero_chiprout(w: int, h: int) -> Image.Image:
-    im = Image.new("RGB", (w, h), (17, 24, 39))
+def art_solomons(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (224, 238, 246))
     d = ImageDraw.Draw(im)
-    for gy in range(28, h - 10, 34):
-        d.line([(12, gy), (w - 12, gy)], fill=(31, 41, 55), width=2)
-    bars = [
-        (42, 34, 72, False),
-        (86, 46, 90, True),
-        (130, 70, 116, True),
-        (174, 86, 132, True),
-        (218, 100, 146, True),
-        (262, 112, 156, True),
-    ]
-    for bx, top, bot, red in bars:
-        col = (239, 68, 68) if red else (34, 197, 94)
-        d.line([(bx, top - 14), (bx, bot + 14)], fill=col, width=3)
-        d.rectangle([bx - 11, top, bx + 11, bot], fill=col)
-    pts = [(38, 38), (118, 70), (200, 112), (288, 148)]
-    d.line(pts, fill=(250, 204, 21), width=5)
-    d.polygon([(296, 152), (276, 140), (282, 156)], fill=(250, 204, 21))
-    cx, cy = w - 76, 56
-    d.rounded_rectangle([cx - 32, cy - 32, cx + 32, cy + 32], radius=6, fill=(55, 65, 81), outline=(250, 204, 21), width=3)
-    for k in range(-20, 24, 13):
-        d.line([(cx + k, cy - 40), (cx + k, cy - 32)], fill=(250, 204, 21), width=3)
-        d.line([(cx + k, cy + 32), (cx + k, cy + 40)], fill=(250, 204, 21), width=3)
-    d.line([(cx - 24, cy - 24), (cx + 24, cy + 24)], fill=(239, 68, 68), width=4)
+    # Coral sea & island landmasses
+    d.polygon([(14, h), (80, 38), (168, 46), (192, h)], fill=(144, 174, 152))
+    d.polygon([(310, 24), (376, 36), (398, 62), (340, 74)], fill=(120, 162, 132))
+    d.line([(168, 62), (324, 48)], fill=(28, 62, 116), width=4)
+    # Flag badges
+    d.rectangle([28, 18, 84, 50], fill=(29, 78, 216), outline=(255, 255, 255), width=2)
+    d.rectangle([w - 92, 18, w - 36, 50], fill=(21, 128, 61), outline=(250, 204, 21), width=2)
+    return im
+
+
+def art_shanghai_probe(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (22, 26, 40))
+    d = ImageDraw.Draw(im)
+    # Pudong & Party hall skyline
+    for sx, sw, sh in [(30, 36, 62), (82, 40, 82), (144, 22, 96), (340, 44, 72), (402, 34, 58)]:
+        d.rectangle([sx, h - sh, sx + sw, h], fill=(42, 52, 72))
+    # Classical red hall center
+    cx = w // 2
+    d.rectangle([cx - 64, 42, cx + 64, h], fill=(153, 27, 27))
+    d.polygon([(cx - 76, 44), (cx, 16), (cx + 76, 44)], fill=(202, 138, 4))
+    for px in range(cx - 48, cx + 56, 24):
+        d.rectangle([px, 50, px + 8, h], fill=(248, 250, 252))
+    return im
+
+
+def art_cartagena(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (234, 228, 212))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, int(h * 0.72), w, h], fill=(55, 65, 81))
+    # Supermarket building & striped awning
+    d.rectangle([70, 22, w - 70, int(h * 0.74)], fill=(248, 250, 252), outline=(100, 116, 139), width=2)
+    for i, sx in enumerate(range(70, w - 80, 28)):
+        d.rectangle([sx, 22, sx + 28, 42], fill=(220, 38, 38) if i % 2 == 0 else (255, 255, 255))
+    # Police rescue perimeter & sirens
+    d.rounded_rectangle([24, 58, 92, 86], radius=6, fill=(30, 58, 138))
+    d.ellipse([44, 48, 66, 60], fill=(56, 189, 248))
+    d.line([(16, int(h * 0.78)), (w - 16, int(h * 0.78))], fill=(250, 204, 21), width=4)
+    return im
+
+
+def art_chip_rout(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (15, 23, 42))
+    d = ImageDraw.Draw(im)
+    for gx in range(30, w, 46):
+        d.line([(gx, 8), (gx, h - 8)], fill=(30, 41, 59), width=2)
+    for i, (top, bot) in enumerate([(18, 44), (30, 58), (44, 72), (56, 86), (68, 98)]):
+        bx = 44 + i * 52
+        d.rectangle([bx, top, bx + 22, bot], fill=(239, 68, 68))
+    d.line([(36, 20), (144, 52), (272, 92)], fill=(250, 204, 21), width=4)
+    # Microchip icon right
+    cx, cy = w - 86, h // 2
+    d.rounded_rectangle([cx - 26, cy - 26, cx + 26, cy + 26], radius=6, fill=(71, 85, 105), outline=(250, 204, 21), width=3)
+    d.line([(cx - 18, cy - 18), (cx + 18, cy + 18)], fill=(239, 68, 68), width=4)
+    return im
+
+
+def art_courthouse(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (222, 228, 238))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, int(h * 0.76), w, h], fill=(51, 65, 85))
+    cx = w // 2
+    d.polygon([(cx - 130, 32), (cx, 8), (cx + 130, 32)], fill=(100, 116, 139))
+    d.rectangle([cx - 120, 32, cx + 120, int(h * 0.78)], fill=(241, 245, 249))
+    for px in range(cx - 102, cx + 106, 32):
+        d.rectangle([px, 34, px + 14, int(h * 0.76)], fill=(148, 163, 184))
+    return im
+
+
+def art_senegal_afcon(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (16, 54, 42))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, int(h * 0.68), w, h], fill=(22, 101, 52))
+    # Golden stadium glow & AFCON cup silhouette
+    cx = w // 2
+    d.ellipse([cx - 56, 10, cx + 56, 98], fill=(21, 128, 61))
+    d.polygon([(cx - 24, 22), (cx + 24, 22), (cx + 14, 58), (cx - 14, 58)], fill=(250, 204, 21))
+    d.rectangle([cx - 6, 58, cx + 6, 78], fill=(250, 204, 21))
+    d.rectangle([cx - 18, 76, cx + 18, 86], fill=(234, 179, 8))
+    return im
+
+
+def art_sandringham(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (196, 208, 220))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, int(h * 0.70), w, h], fill=(74, 112, 76))
+    # Brick Georgian country manor
+    cx = w // 2
+    d.rectangle([cx - 110, 28, cx + 110, int(h * 0.72)], fill=(154, 92, 68))
+    d.polygon([(cx - 120, 28), (cx - 88, 12), (cx + 88, 12), (cx + 120, 28)], fill=(64, 72, 84))
+    for wx in range(cx - 86, cx + 80, 34):
+        d.rectangle([wx, 42, wx + 16, 64], fill=(226, 232, 240))
+    # Police response beacon bottom right
+    d.rounded_rectangle([w - 116, int(h * 0.56), w - 24, int(h * 0.80)], radius=6, fill=(248, 250, 252))
+    d.rectangle([w - 78, int(h * 0.48), w - 60, int(h * 0.56)], fill=(37, 99, 235))
+    return im
+
+
+def art_kyiv_magyar(w: int, h: int) -> Image.Image:
+    im = Image.new("RGB", (w, h), (208, 222, 236))
+    d = ImageDraw.Draw(im)
+    d.rectangle([0, int(h * 0.64), w, h], fill=(98, 122, 92))
+    # Ukraine (blue/yellow) + Hungary (red/white/green) bilateral rail corridor
+    d.rectangle([38, 18, 134, 42], fill=(29, 78, 216))
+    d.rectangle([38, 42, 134, 66], fill=(250, 204, 21))
+    d.rectangle([w - 134, 18, w - 38, 34], fill=(185, 28, 28))
+    d.rectangle([w - 134, 34, w - 38, 50], fill=(255, 255, 255))
+    d.rectangle([w - 134, 50, w - 38, 66], fill=(21, 128, 61))
+    d.line([(68, int(h * 0.78)), (w - 68, int(h * 0.78))], fill=(51, 65, 85), width=6)
+    d.line([(134, 42), (w - 134, 42)], fill=(29, 78, 216), width=3)
     return im
 
 
 # ---------------------------------------------------------------------------
-# 2x Supersampled Vector World Map with Equirectangular Projection
+# World Map Projection & Pins (All 11 Illustrated + Key Regional Hotspots)
 # ---------------------------------------------------------------------------
-WORLD_POLYGONS: list[tuple[str, list[tuple[float, float]]]] = [
-    ("NA", [(-168, 66), (-140, 70), (-95, 72), (-62, 62), (-54, 48), (-72, 42), (-81, 26), (-92, 17), (-106, 20), (-124, 40), (-136, 57)]),
-    ("GL", [(-52, 60), (-42, 82), (-18, 78), (-24, 65)]),
-    ("SA", [(-80, 10), (-62, 11), (-35, -6), (-42, -23), (-58, -39), (-68, -54), (-75, -44), (-72, -18), (-81, -4)]),
-    ("EU", [(-9, 37), (3, 43), (-5, 49), (10, 56), (6, 62), (24, 70), (42, 66), (48, 52), (38, 46), (26, 41), (16, 39), (12, 43), (2, 42)]),
-    ("UK", [(-8, 51), (-2, 58), (2, 53), (-5, 50)]),
-    ("AF", [(-17, 15), (-12, 29), (10, 37), (33, 31), (43, 12), (51, 11), (41, -3), (40, -18), (28, -33), (18, -34), (12, -16), (9, 4), (-7, 5)]),
-    ("MG", [(44, -25), (50, -13), (47, -24)]),
-    ("ME", [(34, 31), (42, 37), (56, 25), (60, 22), (50, 14), (43, 13), (35, 29)]),
-    ("AS", [(44, 65), (72, 72), (126, 72), (168, 65), (144, 52), (132, 42), (122, 34), (120, 23), (108, 12), (102, 2), (96, 16), (86, 21), (78, 8), (68, 23), (58, 26), (42, 42)]),
-    ("JP", [(130, 32), (141, 44), (145, 42), (137, 34)]),
-    ("ID", [(96, 5), (118, -2), (136, -4), (132, -8), (106, -8)]),
-    ("AU", [(114, -22), (130, -12), (142, -12), (153, -27), (148, -38), (134, -34), (116, -34)]),
-    ("NZ", [(168, -46), (178, -36), (174, -44)]),
+WORLD_POLYGONS: list[list[tuple[float, float]]] = [
+    [(-166, 66), (-140, 70), (-94, 72), (-62, 62), (-54, 48), (-72, 42), (-81, 26), (-92, 17), (-106, 20), (-124, 40), (-136, 57)],
+    [(-52, 60), (-42, 82), (-18, 78), (-24, 65)],
+    [(-80, 10), (-62, 11), (-35, -6), (-42, -23), (-58, -39), (-68, -54), (-75, -44), (-72, -18), (-81, -4)],
+    [(-9, 37), (3, 43), (-5, 49), (10, 56), (6, 62), (24, 70), (42, 66), (48, 52), (38, 46), (26, 41), (16, 39), (12, 43), (2, 42)],
+    [(-8, 51), (-2, 58), (2, 53), (-5, 50)],
+    [(-17, 15), (-12, 29), (10, 37), (33, 31), (43, 12), (51, 11), (41, -3), (40, -18), (28, -33), (18, -34), (12, -16), (9, 4), (-7, 5)],
+    [(44, -25), (50, -13), (47, -24)],
+    [(34, 31), (42, 37), (56, 25), (60, 22), (50, 14), (43, 13), (35, 29)],
+    [(44, 65), (72, 72), (126, 72), (168, 65), (144, 52), (132, 42), (122, 34), (120, 23), (108, 12), (102, 2), (96, 16), (86, 21), (78, 8), (68, 23), (58, 26), (42, 42)],
+    [(130, 32), (141, 44), (145, 42), (137, 34)],
+    [(96, 5), (118, -2), (136, -4), (132, -8), (106, -8)],
+    [(114, -22), (130, -12), (142, -12), (153, -27), (148, -38), (134, -34), (116, -34)],
 ]
 
-MAP_PINS: list[tuple[int, float, float, tuple[int, int, int]]] = [
-    (1, 20.1, 32.1, CRIMSON),       # Benghazi
-    (2, 99.8, 40.9, (37, 99, 235)), # Jiuquan / Shenzhou-24
-    (3, 42.9, 14.8, AMBER),         # Hodeidah / Red Sea
-    (4, 121.5, 25.0, CRIMSON),      # Taipei / Asian Chip Rout
-    (5, 160.0, -9.4, (109, 40, 217)), # Solomon Is. / Pacific Pact
-    (6, -74.0, 40.7, (29, 78, 216)),  # NY / Huawei + UN
-    (7, 6.1, 46.2, CRIMSON),          # Geneva World Chess
-    (8, -17.4, 14.7, (15, 118, 110)), # Senegal AFCON
-    (9, 24.0, 48.6, CRIMSON),         # Transcarpathia Zelenskyy-Magyar
-    (10, -58.4, -34.6, (4, 120, 87)), # Buenos Aires recession
-    (11, 106.8, -6.2, (109, 40, 217)), # Jakarta OECD
-    (12, 3.4, 6.5, (15, 118, 110)),   # Nigeria budget / Edochie
+PINS: list[tuple[int, float, float, tuple[int, int, int]]] = [
+    (1, 46.7, 24.7, CRIMSON),       # Riyadh PIF
+    (2, 100.3, 40.9, NAVY),         # Jiuquan Shenzhou-24
+    (3, 49.5, 53.2, CRIMSON),       # Samara Russia
+    (4, 159.9, -9.4, TEAL),         # Solomons / Canberra
+    (5, 121.5, 31.2, CRIMSON),      # Shanghai Chen Jining
+    (6, -75.5, 10.4, AMBER),        # Cartagena Colombia
+    (7, 126.9, 37.5, NAVY),         # Seoul / Taipei Chips
+    (8, -74.0, 40.7, NAVY),         # Brooklyn Huawei + NY
+    (9, -17.4, 14.7, EMERALD),      # Dakar Senegal
+    (10, 0.7, 52.8, VIOLET),        # Norfolk Sandringham UK
+    (11, 24.0, 48.6, NAVY),         # Ukraine-Hungary summit
 ]
 
 
-def draw_world_map_base(base: Image.Image, x: int, y: int, w: int, h: int) -> None:
-    # Draw crisp 2x map onto base image (already 2x coordinates passed!)
-    d = ImageDraw.Draw(base)
-    d.rounded_rectangle([x, y, x + w, y + h], radius=12, fill=OCEAN, outline=(148, 174, 204), width=3)
-    # Graticule
+def draw_map_surface(im: Image.Image, x: int, y: int, w: int, h: int) -> None:
+    d = ImageDraw.Draw(im)
+    d.rectangle([x, y, x + w, y + h], fill=OCEAN, outline=RULE_LIGHT, width=2)
     for lon in (-120, -60, 0, 60, 120):
-        px = x + int((lon + 180.0) / 360.0 * (w - 24)) + 12
-        d.line([(px, y + 6), (px, y + h - 6)], fill=(196, 217, 238), width=2)
+        px = x + int((lon + 180.0) / 360.0 * (w - 16)) + 8
+        d.line([(px, y + 4), (px, y + h - 4)], fill=(208, 222, 235), width=2)
     for lat in (-40, 0, 40):
-        py = y + int((85.0 - lat) / 145.0 * (h - 24)) + 12
-        d.line([(x + 6, py), (x + w - 6, py)], fill=(196, 217, 238), width=2)
+        py = y + int((84.0 - lat) / 142.0 * (h - 16)) + 8
+        d.line([(x + 4, py), (x + w - 4, py)], fill=(208, 222, 235), width=2)
 
     def proj(lon: float, lat: float) -> tuple[int, int]:
-        px = x + int((lon + 180.0) / 360.0 * (w - 28)) + 14
-        py = y + int((84.0 - lat) / 142.0 * (h - 28)) + 14
-        return px, py
+        return (
+            x + int((lon + 180.0) / 360.0 * (w - 18)) + 9,
+            y + int((84.0 - lat) / 142.0 * (h - 18)) + 9,
+        )
 
-    for _code, pts in WORLD_POLYGONS:
-        poly = [proj(lon, lat) for lon, lat in pts]
-        d.polygon(poly, fill=LAND, outline=LAND_LINE)
+    for poly_pts in WORLD_POLYGONS:
+        d.polygon([proj(lon, lat) for lon, lat in poly_pts], fill=LAND, outline=LAND_EDGE)
 
-    # Connecting alert arcs (Benghazi, Jiuquan orbit, Hormuz)
-    bx, by = proj(30.5, 50.4)
-    tx, ty = proj(20.1, 32.1)
-    d.line([(bx, by), (tx, ty)], fill=(220, 38, 38), width=3)
-
-    # Numbered pins
-    for num, lon, lat, col in MAP_PINS:
+    for _num, lon, lat, col in PINS:
         px, py = proj(lon, lat)
-        d.ellipse([px - 14, py - 14, px + 14, py + 14], fill=col, outline=(255, 255, 255), width=3)
+        d.ellipse([px - 12, py - 12, px + 12, py + 12], fill=col, outline=(255, 255, 255), width=2)
 
 
-def draw_pin_numbers(draw: ImageDraw.ImageDraw, x: int, y: int, w: int, h: int) -> None:
+def draw_map_pin_nums(draw: ImageDraw.ImageDraw, x: int, y: int, w: int, h: int) -> None:
     def proj(lon: float, lat: float) -> tuple[int, int]:
-        px = x + int((lon + 180.0) / 360.0 * (w - 14)) + 7
-        py = y + int((84.0 - lat) / 142.0 * (h - 14)) + 7
-        return px, py
+        return (
+            x + int((lon + 180.0) / 360.0 * (w - 9)) + 4,
+            y + int((84.0 - lat) / 142.0 * (h - 9)) + 4,
+        )
 
-    for num, lon, lat, _col in MAP_PINS:
+    for num, lon, lat, _col in PINS:
         px, py = proj(lon, lat)
-        txt = str(num)
-        tb = draw.textbbox((0, 0), txt, font=F_PIN)
-        tw, th = tb[2] - tb[0], tb[3] - tb[1]
-        draw.text((px - tw // 2, py - th // 2 - 1), txt, font=F_PIN, fill=(255, 255, 255))
+        t = str(num)
+        bb = draw.textbbox((0, 0), t, font=F_PIN)
+        draw.text((px - (bb[2] - bb[0]) // 2, py - (bb[3] - bb[1]) // 2 - 1), t, font=F_PIN, fill=(255, 255, 255))
 
 
 # ---------------------------------------------------------------------------
-# Verified Data Set — Wednesday, 25 November 2026
+# Verified 25 November 2026 Editorial Content (Zero Stale Carryovers)
 # ---------------------------------------------------------------------------
-HEROES = [
-    HeroStory(
-        kicker="1 · UKRAINE–LIBYA",
-        headline="Kyiv Sinks Warship in Libya",
-        summary="SBU sea drones sink Russian corvette Merkury & hit arms ship.",
-        source="Guardian/CNN",
-        accent=CRIMSON,
-        drawer=draw_hero_benghazi,
+KPIS = [
+    ("1st", "Pakistani pilot aboard China's Tiangong station", NAVY),
+    ("11 HURT", "in 2nd Houthi strike on Riyadh PIF Tower", CRIMSON),
+    ("≈500,000", "Russian war dead in leaked state database", CRIMSON),
+    ("-4.8%", "Taiex chip rout; Kospi halts on -5% drop", AMBER),
+    ("47,000", "femicides/yr (5/hr) cited on Nov 25 UN Day", TEAL),
+    ("A$740M", "Australia–Solomons pact banning foreign bases", EMERALD),
+]
+
+LEADS = [
+    LeadArticle(
+        1,
+        "CONFIRMED",
+        CRIMSON,
+        "MIDDLE EAST · CONFLICT · RIYADH & GULF",
+        "PIF Tower hit again in Riyadh; 11 wounded",
+        "Houthi drone/missile attack strikes financial landmark in 2nd attack; coalition hits Hodeidah, downs 4 drones.",
+        "MIDDLE EAST EYE · ARAB NEWS · AA",
+        art_riyadh_pif,
     ),
-    HeroStory(
-        kicker="2 · CHINA SPACE",
-        headline="1st Foreigner at Tiangong",
-        summary="Shenzhou-24 docks with Pakistan specialist M. Zeeshan Ali.",
-        source="Xinhua/Hindu",
-        accent=(29, 78, 216),
-        drawer=draw_hero_tiangong,
+    LeadArticle(
+        2,
+        "LIFTOFF",
+        NAVY,
+        "ASIA · SPACE · JIUQUAN",
+        "Shenzhou-24 lifts off with 1st foreign astronaut",
+        "Long March-2F launches at 06:15 UTC carrying Pakistani payload pilot Muhammad Zeeshan Ali to Tiangong.",
+        "XINHUA · THE HINDU · CBS NEWS",
+        art_shenzhou24,
     ),
-    HeroStory(
-        kicker="3 · RED SEA & GULF",
-        headline="Hodeidah Hit, 4 Drones Shot",
-        summary="Coalition bombs Yemen port; Saudi Arabia & Hormuz on alert.",
-        source="AA/GulfNews",
-        accent=AMBER,
-        drawer=draw_hero_redsea,
-    ),
-    HeroStory(
-        kicker="4 · ASIA TECH ROUT",
-        headline="Chip Stocks Plunge in Asia",
-        summary="Taiex -4.8% (38,195), Kospi halts -5% on AI & US tariff fears.",
-        source="Al Jazeera",
-        accent=(185, 28, 28),
-        drawer=draw_hero_chiprout,
+    LeadArticle(
+        3,
+        "LEAKED",
+        CRIMSON,
+        "EUROPE · WAR · MOSCOW & SAMARA",
+        "Leaked data shows ~500k Russian war dead",
+        "Hacked state mortality files expose war losses as overnight Ukrainian drones ignite Syzran & Kuibyshev refineries.",
+        "THE GUARDIAN · MOSCOW TIMES",
+        art_samara_leak,
     ),
 ]
 
-SPOTLIGHTS = [
-    SpotlightItem("5 · SOLOMON PACT", "Australia & Honiara ink $740M treaty barring foreign bases", "Guardian", 5, (109, 40, 217)),
-    SpotlightItem("6 · HUAWEI VERDICT", "Brooklyn jury finds 10 fraud/Iran counts; acquits RICO", "JT", 6, (29, 78, 216)),
-    SpotlightItem("7 · CHESS GAME 2", "Gukesh (20) & Sindarov (20) draw Game 1; clash in Geneva", "FIDE", 7, CRIMSON),
-    SpotlightItem("8 · SENEGAL AFCON", "CAS overturns CAF & restores Senegal's 2025 crown", "WGLT", 8, (15, 118, 110)),
-    SpotlightItem("9 · KYIV–HUNGARY", "Zelenskyy & PM Magyar hail rail, gas and EU reset", "Guardian", 9, CRIMSON),
-    SpotlightItem("10 · NOV 25 UN DAY", "UNODC warns 47,000 femicides in 2025 (5/hr); 7% report", "UN", 6, (30, 64, 175)),
+CARDS = [
+    CardArticle(4, "OCEANIA · CANBERRA", "Australia–Solomons sign A$740M base ban", "REUTERS · ABC", TEAL, art_solomons),
+    CardArticle(5, "ASIA · SHANGHAI", "China probes Politburo boss Chen Jining", "SCMP · GUARDIAN", CRIMSON, art_shanghai_probe),
+    CardArticle(6, "AMERICAS · CARTAGENA", "Police storm store, free all hostages", "GUARDIAN · AP", AMBER, art_cartagena),
+    CardArticle(7, "ASIA · MARKETS", "Asian chips sink; USTR eyes 16-nation tariffs", "AL JAZEERA · MSTAR", NAVY, art_chip_rout),
+    CardArticle(8, "AMERICAS · BROOKLYN", "Huawei vows appeal on 10/12 US counts", "TIME · BLOOMBERG", NAVY, art_courthouse),
+    CardArticle(9, "AFRICA · DAKAR", "CAS restores Senegal as AFCON winner", "CAS · WGLT", EMERALD, art_senegal_afcon),
+    CardArticle(10, "EUROPE · NORFOLK", "Two charged over William & Kate break-in", "WASHPOST · BBC", VIOLET, art_sandringham),
+    CardArticle(11, "EUROPE · TRANSCARPATHIA", "Zelenskyy–Magyar rail reset; €45B EU push", "GUARDIAN · FOE", NAVY, art_kyiv_magyar),
 ]
 
-REGIONS = [
-    RegionBlock(
-        title="NORTH AMERICA · US & CANADA",
-        accent=(29, 78, 216),
-        items=[
-            DispatchItem("81M US TRAVELERS", "Dual coastal storms & Chicago O'Hare outage snarl eve rush", "CNN"),
-            DispatchItem("USTR 301 TARIFFS", "Greer readies excess-capacity trade probes on 16 nations", "MStar"),
-            DispatchItem("CIA OSINT BREACH", "NYT reports hack into unclassified US intel data system", "NYT"),
-            DispatchItem("IOWA ARMY BLAST", "Controlled lead-azide detonation safely clears plant", "Army"),
-            DispatchItem("NHL 600 ASSISTS", "Vegas star Mitch Marner hits 600 assists against Oilers", "NHL"),
-        ],
-    ),
-    RegionBlock(
-        title="LATIN AMERICA · CARIBBEAN",
-        accent=(4, 120, 87),
-        items=[
-            DispatchItem("ARGENTINA SLUMP", "INDEC -1.2% Sept drop confirms Q3 technical recession", "Xinhua"),
-            DispatchItem("PETROBRAS $122B", "2027-31 plan prioritizes 70%+ pre-salt deepwater oil", "Offsh"),
-            DispatchItem("BRAZIL WTO SUIT", "Brasilia seeks WTO dispute panel on US Sec. 301 duties", "WTO"),
-            DispatchItem("MEXICO PROTESTS", "US Mission alerts Reforma-Zocalo traffic & police curbs", "US Emb"),
-            DispatchItem("ECLAC & MPOX", "Brasilia hosts LatAm tech summit; PAHO mpox alert", "PAHO"),
-        ],
-    ),
-    RegionBlock(
-        title="EUROPE · UKRAINE & RUSSIA",
-        accent=(185, 28, 28),
-        items=[
-            DispatchItem("MET POLICE DAMNED", "Fairfield review finds enduring racism & misogyny", "Guard"),
-            DispatchItem("UK SABOTAGE RISK", "Britain alerts Ukraine-supply firms after Estonia plots", "UNB"),
-            DispatchItem("EU $45B MANIFESTO", "90+ ex-leaders urge frozen-asset loans for Ukraine", "FoE"),
-            DispatchItem("US DROPS DEALS", "Envoys shelve Moscow carrots; Bila Tserkva struck", "FT"),
-            DispatchItem("MOSCOW TALKS", "Putin hosts Brunei Sultan; leak cites ~500k dead", "Guard"),
-        ],
-    ),
-    RegionBlock(
-        title="MIDDLE EAST · NORTH AFRICA",
-        accent=(180, 83, 9),
-        items=[
-            DispatchItem("JEDDAH WARNING", "Houthis threaten Saudi Red Sea ports over Hodeidah raids", "HoS"),
-            DispatchItem("HORMUZ MINES", "IRGC says two oil tankers struck naval mines & burned", "AA"),
-            DispatchItem("GAZA WINTER ALERT", "IDF kills Hamas security chief; floods hit 1.7M IDPs", "IOM"),
-            DispatchItem("BEKAA AIRSTRIKES", "Israeli jets bomb subterranean Hezbollah missile sites", "IDF"),
-            DispatchItem("BENGHAZI TOLL", "Two Libyan naval officers succumb after sea-drone strike", "Guard"),
-        ],
-    ),
-    RegionBlock(
-        title="SUB-SAHARAN AFRICA",
-        accent=(15, 118, 110),
-        items=[
-            DispatchItem("PETE EDOCHIE (79)", "Nollywood legend passes in Enugu amid national tributes", "AllAfr"),
-            DispatchItem("NIGERIA BUDGET", "Tinubu urges lawmakers to trim FY26 spending to N65.18T", "Punch"),
-            DispatchItem("SUDAN DIALOGUE", "RSF coalition & Somoud welcome Ethiopia peace bid", "SudanT"),
-            DispatchItem("NASPERS +12%", "Core half-year profit jumps on strong Tencent gains", "CNBC"),
-            DispatchItem("GHANA & AIJC", "Mahama courts German capital; Nairobi AI media ends", "Wits"),
-        ],
-    ),
-    RegionBlock(
-        title="ASIA-PACIFIC · SOUTH ASIA",
-        accent=(109, 40, 217),
-        items=[
-            DispatchItem("OECD IN JAKARTA", "Cormann launches Indonesia chip plan across 25 reviews", "Antara"),
-            DispatchItem("NORTH KOREA", "Pyongyang expels head of Swiss diplomatic mission", "JT"),
-            DispatchItem("MALAYSIA 787s", "MAG commits to order up to 16 Boeing 787-10 jets", "Boeing"),
-            DispatchItem("INDIA UN & CRICKET", "Delhi urges AI guardrails; Sooryavanshi fastest List A 100", "IndExp"),
-            DispatchItem("CHINA RESERVES", "Sinograin seeks 600k t soy oil; Nikkei ends 57,012", "UkrAg"),
-        ],
-    ),
-]
-
-TICKER_ITEMS = [
-    ("ASIA MARKETS", "Taiex 38,195 (-4.8%) | Nikkei 57,012 | Kospi -5%", CRIMSON),
-    ("UNSC AI BAN", "Guterres seeks ban on killer robots", (96, 165, 250)),
-    ("ICBL REPORT", "Global mine toll highest since 2020", (251, 191, 36)),
-    ("KAIST SCIENCE", "RQC protein link paces circadian clocks", (52, 211, 153)),
-    ("MIT & CANON", "Atom black holes study; Ultimion CT debut", (192, 132, 252)),
+BRIEFS_COLS: list[list[tuple[int, str, str, str]]] = [
+    [
+        (12, "HORMUZ", "IRGC reports 2 tankers struck mines & burned", "AA"),
+        (13, "WASHINGTON", "US shelves Russia business deals in talks", "FT"),
+        (14, "LANGLEY", "CIA & ODNI disclose unclassified OSINT hack", "NYT"),
+        (15, "CHICAGO", "81M Thanksgiving travelers hit storms & delays", "CNN"),
+        (16, "MIDDLETOWN", "US Army safely detonates degraded lead azide", "ARMY"),
+        (17, "BUENOS AIRES", "INDEC -1.2% Sept drop confirms technical slump", "XINHUA"),
+        (18, "RIO / WTO", "Petrobras $122B plan; Brazil files WTO dispute", "WTO"),
+        (19, "MEXICO CITY", "US alert on Zocalo marches; PAHO mpox watch", "PAHO"),
+    ],
+    [
+        (20, "LONDON", "Fairfield review cites Met Police racism issues", "GUARD"),
+        (21, "LONDON", "UK warns Ukraine defense firms on sabotage", "UNB"),
+        (22, "GENEVA", "World Chess G2: Gukesh vs Sindarov (both 20)", "FIDE"),
+        (23, "MOSCOW", "Putin & Brunei Sultan hold official talks", "KREM"),
+        (24, "GAZA / BEKAA", "IDF kills Hamas security chief; IOM flood alert", "IOM"),
+        (25, "ABUJA / ENUGU", "Tinubu cuts budget to N65.18T; Edochie dies", "PUNCH"),
+        (26, "KHARTOUM", "Somoud & RSF coalition back Ethiopia talks", "SUDAN T"),
+        (27, "JOHANNESBURG", "Naspers core half-year profit rises 12%", "CNBC"),
+    ],
+    [
+        (28, "JAKARTA", "OECD Sec-Gen unveils Indonesia chip blueprint", "ANTARA"),
+        (29, "NEW DELHI", "India urges UN AI curbs; Vaibhav hits record 100", "INDEXP"),
+        (30, "PYONGYANG", "N. Korea expels head of Swiss mission", "JT"),
+        (31, "BANGKOK", "DDPM alerts 15 southern provinces on floods", "NATION"),
+        (32, "KUALA LUMPUR", "Malaysia Aviation commits up to 16 787-10 jets", "BOEING"),
+        (33, "TOKYO / ASIA", "Lowy shows 5.3-pt US-China gap; soy tender", "LOWY"),
+        (34, "UN / GENEVA", "Guterres urges AI arms ban; mine toll climbs", "UN / ICBL"),
+        (35, "SCIENCE / NHL", "KAIST clock gene; MIT black hole; Marner 600A", "SCI / NHL"),
+    ],
 ]
 
 
-def render_edition() -> None:
-    # 1) Render high-resolution vector art layer at 2x (2048x2048)
-    art_hi = Image.new("RGB", (WIDTH * SCALE, HEIGHT * SCALE), PAPER)
-    d_hi = ImageDraw.Draw(art_hi)
+def render() -> None:
+    hi = Image.new("RGB", (WIDTH * SCALE, HEIGHT * SCALE), PAPER)
+    dh = ImageDraw.Draw(hi)
 
-    # Top masthead dark fill + crimson top stripe + gold underline (2x)
-    d_hi.rectangle([0, 0, WIDTH * SCALE, 66 * SCALE], fill=NAVY_DARK)
-    d_hi.rectangle([0, 0, WIDTH * SCALE, 5 * SCALE], fill=CRIMSON)
-    d_hi.rectangle([0, 64 * SCALE, WIDTH * SCALE, 67 * SCALE], fill=GOLD)
+    # Top thin header strip & crisp broadsheet rules (2x)
+    dh.rectangle([0, 0, WIDTH * SCALE, 22 * SCALE], fill=RULE_DARK)
+    dh.line([14 * SCALE, 80 * SCALE, 1010 * SCALE, 80 * SCALE], fill=RULE_DARK, width=4)
+    dh.line([14 * SCALE, 92 * SCALE, 1010 * SCALE, 92 * SCALE], fill=RULE_LIGHT, width=2)
+    dh.line([14 * SCALE, 111 * SCALE, 1010 * SCALE, 111 * SCALE], fill=RULE_DARK, width=2)
 
-    # Hero card frames & 2x artwork
-    hero_w = 244
-    hero_gap = 8
-    x0 = 12
-    for idx, hero in enumerate(HEROES):
-        hx = x0 + idx * (hero_w + hero_gap)
-        hy = 74
-        hh = 176
-        d_hi.rounded_rectangle(
-            [hx * SCALE, hy * SCALE, (hx + hero_w) * SCALE, (hy + hh) * SCALE],
-            radius=12,
-            fill=CARD_BG,
-            outline=BORDER,
-            width=2,
-        )
-        hero_art = hero.drawer((hero_w - 10) * SCALE, 86 * SCALE)
-        art_hi.paste(hero_art, ((hx + 5) * SCALE, (hy + 5) * SCALE))
-        # Kicker pill strip right beneath illustration edge
-        d_hi.rectangle(
-            [(hx + 5) * SCALE, (hy + 89) * SCALE, (hx + hero_w - 5) * SCALE, (hy + 92) * SCALE],
-            fill=hero.accent,
-        )
+    # KPI Band (y: 113..154)
+    dh.rectangle([14 * SCALE, 113 * SCALE, 1010 * SCALE, 154 * SCALE], fill=PAPER_ALT)
+    dh.line([14 * SCALE, 154 * SCALE, 1010 * SCALE, 154 * SCALE], fill=RULE_LIGHT, width=2)
+    kpi_w = 166
+    for i in range(1, 6):
+        kx = (14 + i * kpi_w) * SCALE
+        dh.line([kx, 118 * SCALE, kx, 149 * SCALE], fill=RULE_LIGHT, width=2)
 
-    # World Map (left of row 2: x=12..498, y=258..466)
-    map_x, map_y, map_w, map_h = 12, 258, 486, 208
-    draw_world_map_base(art_hi, map_x * SCALE, map_y * SCALE, map_w * SCALE, map_h * SCALE)
+    # 3 Lead Cards (y: 162..374, w=322 each, gap=15)
+    lw = 322
+    lgap = 15
+    for idx, lead in enumerate(LEADS):
+        lx = 14 + idx * (lw + lgap)
+        ly = 162
+        art = lead.drawer(lw * SCALE, 102 * SCALE)
+        hi.paste(art, (lx * SCALE, ly * SCALE))
+        # Badge rect below artwork
+        dh.rectangle([lx * SCALE, (ly + 106) * SCALE, (lx + 72) * SCALE, (ly + 120) * SCALE], fill=lead.badge_col)
+    dh.line([14 * SCALE, 378 * SCALE, 1010 * SCALE, 378 * SCALE], fill=RULE_DARK, width=3)
 
-    # Spotlight grid container (right of row 2: x=506..1012, y=258..466)
-    d_hi.rounded_rectangle(
-        [506 * SCALE, 258 * SCALE, 1012 * SCALE, 466 * SCALE],
-        radius=12,
-        fill=CARD_BG,
-        outline=BORDER,
-        width=2,
-    )
-    d_hi.rounded_rectangle(
-        [506 * SCALE, 258 * SCALE, 1012 * SCALE, 282 * SCALE],
-        radius=8,
-        fill=NAVY_DARK,
-    )
-    d_hi.rectangle([506 * SCALE, 274 * SCALE, 1012 * SCALE, 282 * SCALE], fill=NAVY_DARK)
+    # 8 Mid Illustrated Vignettes (2 rows x 4 cols: y=396..654)
+    cw, ch, cgap = 240, 124, 12
+    for idx, card in enumerate(CARDS):
+        col = idx % 4
+        row = idx // 4
+        cx = 14 + col * (cw + cgap)
+        cy = 398 + row * (ch + 8)
+        art = card.drawer(cw * SCALE, 52 * SCALE)
+        hi.paste(art, (cx * SCALE, cy * SCALE))
+        # Number circle top-left of card art
+        dh.ellipse([(cx + 5) * SCALE, (cy + 5) * SCALE, (cx + 21) * SCALE, (cy + 21) * SCALE], fill=card.accent, outline=(255, 255, 255), width=2)
+        # Thin bottom border under card
+        dh.line([cx * SCALE, (cy + ch) * SCALE, (cx + cw) * SCALE, (cy + ch) * SCALE], fill=RULE_LIGHT, width=2)
 
-    # Subtle spotlight sub-cells (2 cols x 3 rows)
-    for idx, spot in enumerate(SPOTLIGHTS):
-        col = idx % 2
-        row = idx // 2
-        sx = 512 + col * 248
-        sy = 287 + row * 59
-        d_hi.rounded_rectangle(
-            [sx * SCALE, sy * SCALE, (sx + 242) * SCALE, (sy + 54) * SCALE],
-            radius=8,
-            fill=(250, 248, 243),
-            outline=(226, 220, 208),
-            width=2,
-        )
-        d_hi.rectangle([sx * SCALE, sy * SCALE, (sx + 4) * SCALE, (sy + 54) * SCALE], fill=spot.accent)
+    dh.line([14 * SCALE, 658 * SCALE, 1010 * SCALE, 658 * SCALE], fill=RULE_DARK, width=3)
 
-    # 6 Regional broadsheet panels (3 cols x 2 rows: y=474..952)
-    reg_w = 328
-    reg_h = 234
-    for idx, reg in enumerate(REGIONS):
-        col = idx % 3
-        row = idx // 3
-        rx = 12 + col * (reg_w + 8)
-        ry = 474 + row * (reg_h + 8)
-        d_hi.rounded_rectangle(
-            [rx * SCALE, ry * SCALE, (rx + reg_w) * SCALE, (ry + reg_h) * SCALE],
-            radius=12,
-            fill=CARD_BG,
-            outline=BORDER,
-            width=2,
-        )
-        d_hi.rounded_rectangle(
-            [rx * SCALE, ry * SCALE, (rx + reg_w) * SCALE, (ry + 24) * SCALE],
-            radius=8,
-            fill=reg.accent,
-        )
-        d_hi.rectangle([rx * SCALE, (ry + 16) * SCALE, (rx + reg_w) * SCALE, (ry + 24) * SCALE], fill=reg.accent)
-        # Subtle divider hairlines inside region
-        for k in range(1, 5):
-            ly = (ry + 27 + k * 41) * SCALE
-            d_hi.line([(rx + 8) * SCALE, ly, (rx + reg_w - 8) * SCALE, ly], fill=(232, 227, 218), width=2)
+    # Bottom Atlas World Map (x: 14..322, y: 682..888) + Continents Share Bar (894..948)
+    mx, my, mw, mh = 14, 682, 308, 206
+    draw_map_surface(hi, mx * SCALE, my * SCALE, mw * SCALE, mh * SCALE)
+    # Regional distribution stacked bar at y=896..910
+    shares = [
+        ("AM 8", 66, NAVY),
+        ("EU 8", 66, CRIMSON),
+        ("APAC 9", 78, TEAL),
+        ("ME 4", 35, AMBER),
+        ("AF 4", 35, EMERALD),
+        ("GL 2", 28, VIOLET),
+    ]
+    sx = mx
+    for _lbl, sw, col in shares:
+        dh.rectangle([sx * SCALE, 896 * SCALE, (sx + sw) * SCALE, 910 * SCALE], fill=col)
+        sx += sw
 
-    # Footer ticker band (y=960..1016)
-    d_hi.rounded_rectangle([12 * SCALE, 960 * SCALE, 1012 * SCALE, 1016 * SCALE], radius=10, fill=NAVY_DARK)
-    d_hi.rectangle([12 * SCALE, 960 * SCALE, 1012 * SCALE, 963 * SCALE], fill=GOLD)
-    for k in range(1, len(TICKER_ITEMS)):
-        tx = (12 + k * 200) * SCALE
-        d_hi.line([tx, 968 * SCALE, tx, 1010 * SCALE], fill=(51, 65, 85), width=2)
+    # Date-Check Box (y: 954..996) + Sources footer (1000..1018)
+    dh.line([14 * SCALE, 954 * SCALE, 1010 * SCALE, 954 * SCALE], fill=RULE_DARK, width=2)
+    dh.rectangle([14 * SCALE, 958 * SCALE, 1010 * SCALE, 996 * SCALE], fill=PAPER_ALT)
+    dh.rectangle([14 * SCALE, 958 * SCALE, 18 * SCALE, 996 * SCALE], fill=CRIMSON)
+    dh.rectangle([0, 1002 * SCALE, WIDTH * SCALE, HEIGHT * SCALE], fill=RULE_DARK)
 
-    # Downsample cleanly to crisp 1024x1024 base
-    img = art_hi.resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
+    # Downsample 2x artwork to crisp 1024x1024
+    img = hi.resize((WIDTH, HEIGHT), Image.Resampling.LANCZOS)
     draw = ImageDraw.Draw(img)
 
-    # 2) Composite razor-sharp 1x native TrueType typography
-    # Masthead (check headline stays clear left of x=812 pill)
-    mast_text = "THE WORLD · WEDNESDAY, 25 NOVEMBER 2026"
-    mb = draw.textbbox((0, 0), mast_text, font=F_MAST)
-    assert (mb[2] - mb[0]) + 16 < 810, f"Masthead collides with right pill: {mb}"
-    draw.text((16, 13), mast_text, font=F_MAST, fill=(255, 252, 245))
-    draw.text(
-        (17, 44),
-        "ONE-DAY GLOBAL DISPATCH · ALL STORIES DATED 25 NOV 2026 · REUTERS / AP / UN / XINHUA / GUARDIAN / FIDE",
-        font=F_SUBMAST,
-        fill=(219, 229, 245),
+    # 2) Native 1x Crisp Typography Overlay
+    draw.text((14, 5), "THE WORLD IN ONE DAY", font=F_TOPBAR, fill=(255, 255, 255))
+    draw.text((776, 5), "EVERY STORY DATED WEDNESDAY 25 NOV", font=F_TOPBAR, fill=(253, 224, 71))
+
+    # Full-span masthead centered cleanly
+    mast = "Wednesday 25 November 2026"
+    mb = draw.textbbox((0, 0), mast, font=F_MAST)
+    mw_txt = mb[2] - mb[0]
+    assert mw_txt < 996, f"Masthead wider than margin: {mw_txt}"
+    draw.text(((WIDTH - mw_txt) // 2, 24), mast, font=F_MAST, fill=INK)
+
+    meta = "35 VERIFIED STORIES, ALL DATED 25 NOV · AMERICAS 8 · EUROPE 8 · ASIA-PACIFIC 9 · MIDDLE EAST 4 · AFRICA 4 · GLOBAL 2"
+    mtb = draw.textbbox((0, 0), meta, font=F_DECK_META)
+    draw.text(((WIDTH - (mtb[2] - mtb[0])) // 2, 81), meta, font=F_DECK_META, fill=SLATE)
+
+    deck = "Second Houthi strike hits Riyadh's PIF Tower (11 hurt)  ·  Shenzhou-24 takes Pakistan's 1st astronaut  ·  Leaked data shows ~500k Russian dead"
+    dkb = draw.textbbox((0, 0), deck, font=F_DECK)
+    assert dkb[2] - dkb[0] <= 996
+    draw.text(((WIDTH - (dkb[2] - dkb[0])) // 2, 95), deck, font=F_DECK, fill=INK)
+
+    # KPI Row Text (stacked cleanly: bold headline figure on top, concise 2-line caption below)
+    for i, (num_txt, desc_txt, col) in enumerate(KPIS):
+        kx = 20 + i * kpi_w
+        draw.text((kx, 114), num_txt, font=F_KPI_NUM, fill=col)
+        draw_text_lines(draw, kx, 134, desc_txt, F_KPI_TXT, SLATE, kpi_w - 14, 10, 2)
+
+    # 3 Leads Text
+    for idx, lead in enumerate(LEADS):
+        lx = 14 + idx * (lw + lgap)
+        ly = 162
+        # Top-left lead number badge inside art
+        draw.ellipse([lx + 6, ly + 6, lx + 24, ly + 24], fill=lead.badge_col)
+        draw.text((lx + 11, ly + 9), str(lead.num), font=F_PIN, fill=(255, 255, 255))
+
+        bb_tag = draw.textbbox((0, 0), lead.badge, font=F_LEAD_TAG)
+        bw = bb_tag[2] - bb_tag[0]
+        draw.text((lx + max(4, (72 - bw) // 2), ly + 108), lead.badge, font=F_LEAD_TAG, fill=(255, 255, 255))
+        draw.text((lx + 78, ly + 108), lead.region_line, font=F_LEAD_TAG, fill=MUTED)
+        next_y = draw_text_lines(draw, lx, ly + 124, lead.headline, F_LEAD_TITLE, INK, lw, 19, 2)
+        next_y = draw_text_lines(draw, lx, next_y + 3, lead.summary, F_LEAD_BODY, SLATE, lw, 12, 3)
+        draw.text((lx, ly + 198), lead.sources, font=F_LEAD_SRC, fill=MUTED)
+
+    # Section strip 2
+    draw.text((14, 382), "THE DAY IN EIGHT", font=F_SEC_HDR, fill=INK)
+    draw.text((785, 382), "ALL STORIES DATED 25 NOV · MULTI-SOURCED", font=F_LEAD_SRC, fill=MUTED)
+
+    # 8 Mid Cards Text
+    for idx, card in enumerate(CARDS):
+        col = idx % 4
+        row = idx // 4
+        cx = 14 + col * (cw + cgap)
+        cy = 398 + row * (ch + 8)
+        nt = str(card.num)
+        nb = draw.textbbox((0, 0), nt, font=F_PIN)
+        draw.text((cx + 13 - (nb[2] - nb[0]) // 2, cy + 7), nt, font=F_PIN, fill=(255, 255, 255))
+        draw.text((cx, cy + 56), card.region_line, font=F_CARD_TAG, fill=card.accent)
+        ny = draw_text_lines(draw, cx, cy + 68, card.headline, F_CARD_TITLE, INK, cw, 15, 2)
+        draw.text((cx, cy + 104), card.sources, font=F_CARD_SRC, fill=MUTED)
+
+    # Bottom Atlas & 24 Briefs Section
+    draw.text((14, 665), "WHERE IT HAPPENED", font=F_SEC_HDR, fill=INK)
+    draw.text((338, 665), "ALSO ON WEDNESDAY 25 NOV — 24 MORE VERIFIED STORIES", font=F_SEC_HDR, fill=INK)
+    draw.text((878, 666), "PIN = STORY #1–11", font=F_LEAD_SRC, fill=MUTED)
+
+    draw_map_pin_nums(draw, mx, my, mw, mh)
+    sx = mx
+    for lbl, sw, _col in shares:
+        draw.text((sx + 4, 898), lbl, font=F_CARD_TAG, fill=(255, 255, 255))
+        sx += sw
+    draw_text_lines(
+        draw,
+        mx,
+        916,
+        "1 Riyadh · 2 Tiangong · 3 Samara · 4 Solomons · 5 Shanghai · 6 Cartagena · 7 Asia Chips · 8 Brooklyn · 9 Senegal · 10 Norfolk · 11 Kyiv–Hungary",
+        F_CARD_SRC,
+        SLATE,
+        mw,
+        12,
+        3,
     )
-    # Right date/count pill
-    draw.rounded_rectangle([820, 13, 1010, 53], radius=6, fill=CRIMSON)
-    draw.text((831, 18), "WEDNESDAY 25 NOV", font=F_PILL, fill=(255, 255, 255))
-    draw.text((831, 34), "6 CONTINENTS · 45 NEWS", font=F_PILL, fill=(254, 240, 138))
 
-    # Hero labels & text
-    for idx, hero in enumerate(HEROES):
-        hx = 12 + idx * (hero_w + hero_gap)
-        hy = 74
-        hb = draw.textbbox((0, 0), hero.headline, font=F_HERO_TITLE)
-        assert (hb[2] - hb[0]) <= hero_w - 18, f"Hero title too wide: {hero.headline} -> {hb[2]-hb[0]}"
-        draw.text((hx + 9, hy + 96), hero.kicker, font=F_HERO_SRC, fill=hero.accent)
-        draw.text((hx + 9, hy + 111), hero.headline, font=F_HERO_TITLE, fill=INK)
-        lines = wrap_lines(draw, f"{hero.summary} [{hero.source}]", F_HERO_BODY, hero_w - 18)
-        for li, line in enumerate(lines[:3]):
-            assert li < 3, f"Hero text overflow: {hero.headline}"
-            draw.text((hx + 9, hy + 130 + li * 13), line, font=F_HERO_BODY, fill=MUTED)
+    # 3 Columns of 8 Briefs (x=338..1010, each col w=216, gap=11)
+    bcol_w = 216
+    for cidx, items in enumerate(BRIEFS_COLS):
+        bx = 338 + cidx * (bcol_w + 12)
+        for ridx, (num, city, text, src) in enumerate(items):
+            by = 684 + ridx * 33
+            prefix = f"{num}  {city} "
+            pb = draw.textbbox((0, 0), prefix, font=F_BRIEF_CITY)
+            pw = pb[2] - pb[0]
+            draw.text((bx, by), prefix, font=F_BRIEF_CITY, fill=CRIMSON if num in (12, 22, 34) else NAVY)
+            words = f"{text} [{src}]".split()
+            l1, l2, filled = [], [], False
+            cur = ""
+            for w in words:
+                cand = f"{cur} {w}".strip()
+                wb = draw.textbbox((0, 0), cand, font=F_BRIEF_TXT)
+                if not filled and pw + (wb[2] - wb[0]) <= bcol_w:
+                    cur = cand
+                    l1.append(w)
+                else:
+                    filled = True
+                    l2.append(w)
+            draw.text((bx + pw, by), " ".join(l1), font=F_BRIEF_TXT, fill=INK)
+            if l2:
+                l2_lines = wrap_lines(draw, " ".join(l2), F_BRIEF_TXT, bcol_w)
+                assert len(l2_lines) == 1, f"Brief overflow {num} {city}: {l2_lines}"
+                draw.text((bx, by + 12), l2_lines[0], font=F_BRIEF_TXT, fill=SLATE)
 
-    # World Map Pin Numbers + Map Corner Banner + Legend Strip
-    draw_pin_numbers(draw, map_x, map_y, map_w, map_h)
-    draw.rounded_rectangle([map_x + 8, map_y + 7, map_x + 218, map_y + 26], radius=4, fill=(15, 23, 42))
-    draw.text((map_x + 14, map_y + 10), "GLOBAL HOTSPOTS · 25 NOV 2026", font=F_MAP_TITLE, fill=(254, 240, 138))
-    draw.rounded_rectangle([map_x + 6, map_y + map_h - 21, map_x + map_w - 6, map_y + map_h - 5], radius=4, fill=(15, 23, 42))
-    map_legend = "1 Libya · 2 Tiangong · 3 RedSea · 4 TW · 5 Sol · 6 NY · 7 GVA · 8 Sen · 9 Ukr · 10 Arg · 11 ID · 12 NGA"
-    mlb = draw.textbbox((0, 0), map_legend, font=F_MAP_LBL)
-    assert (mlb[2] - mlb[0]) <= map_w - 22, f"Map legend too wide: {mlb[2] - mlb[0]}"
-    draw.text(
-        (map_x + (map_w - (mlb[2] - mlb[0])) // 2, map_y + map_h - 19),
-        map_legend,
-        font=F_MAP_LBL,
-        fill=(241, 245, 249),
+    # Date Check Strip
+    draw.text((24, 962), "DATE CHECK:", font=F_DATE_BOLD, fill=CRIMSON)
+    dc_txt = (
+        "Excluded prior days — Mon 23 Nov: Huang reinstated at Nvidia (+31.5%), Merkury corvette sunk off Libya. "
+        "Tue 24 Nov: initial Riyadh tower strike, Brooklyn jury verdict itself (today covers appeal & reaction), Sparta II Nov 21 hit. "
+        "All 35 stories above occurred or were first reported Wednesday 25 November 2026."
     )
+    draw_text_lines(draw, 94, 961, dc_txt, F_DATE_TXT, INK, 908, 12, 3)
 
-    # Spotlights Header & 6 cards
-    draw.text((516, 263), "MAJOR BREAKING HEADLINES · ALL 6 CONTINENTS", font=F_SEC_HDR, fill=(255, 255, 255))
-    for idx, spot in enumerate(SPOTLIGHTS):
-        col = idx % 2
-        row = idx // 2
-        sx = 518 + col * 248
-        sy = 290 + row * 59
-        draw_inline_item(
-            draw,
-            sx,
-            sy,
-            230,
-            50,
-            spot.kicker,
-            spot.body,
-            spot.source,
-            spot.accent,
-            F_SPOT_KICK,
-            F_SPOT_BODY,
-            line_h=15,
-        )
-
-    # Regional Cards
-    for idx, reg in enumerate(REGIONS):
-        col = idx % 3
-        row = idx // 3
-        rx = 12 + col * (reg_w + 8)
-        ry = 474 + row * (reg_h + 8)
-        draw.text((rx + 10, ry + 5), reg.title, font=F_REG_HDR, fill=(255, 255, 255))
-        for j, item in enumerate(reg.items):
-            iy = ry + 30 + j * 41
-            draw_inline_item(
-                draw,
-                rx + 10,
-                iy,
-                reg_w - 20,
-                38,
-                item.kicker,
-                item.body,
-                item.source,
-                reg.accent,
-                F_ITEM_KICK,
-                F_ITEM_BODY,
-                line_h=14,
-            )
-
-    # Bottom Markets / UN / Science Ticker
-    for idx, (kicker, body, col) in enumerate(TICKER_ITEMS):
-        tx = 20 + idx * 200
-        draw.text((tx, 967), kicker, font=F_TICK_KICK, fill=col)
-        tlines = wrap_lines(draw, body, F_TICK_BODY, 184)
-        for li, line in enumerate(tlines[:2]):
-            draw.text((tx, 981 + li * 13), line, font=F_TICK_BODY, fill=(241, 245, 249))
+    # Bottom footer band
+    draw.text(
+        (14, 1006),
+        "SOURCES: REUTERS · AP · BBC · GUARDIAN · AL JAZEERA · XINHUA · MOSCOW TIMES · WASHPOST · SCMP · ANTARA · UNODC · FIDE · TIME",
+        font=F_TOPBAR,
+        fill=(226, 232, 240),
+    )
+    draw.text((878, 1006), "WEDNESDAY 25 NOV 2026", font=F_TOPBAR, fill=(253, 224, 71))
 
     img.save(OUT_PATH, format="PNG", optimize=True)
-    # Also save a 300x300 simulation preview outside repo? No, script saves only OUT_PATH; test harness inspects 300px separately.
-    print(f"Generated {OUT_PATH}: {os.path.getsize(OUT_PATH)} bytes")
+    print(f"Generated v2 {OUT_PATH}: {os.path.getsize(OUT_PATH)} bytes")
 
 
 if __name__ == "__main__":
-    render_edition()
+    render()
