@@ -20,13 +20,14 @@ WHITE = (255, 255, 255)
 
 REGION_COLORS = {
     "EUROPE": (26, 68, 134),
+    "E & SE ASIA": (182, 42, 42),
     "N. AMERICA": (24, 108, 164),
-    "EAST ASIA": (182, 42, 42),
-    "AFRICA": (118, 48, 128),
     "M. EAST": (196, 104, 24),
-    "S & SE ASIA": (22, 130, 88),
     "LAT. AM.": (164, 76, 38),
+    "SUB-SAH.": (118, 48, 128),
     "OCEANIA": (22, 118, 68),
+    "N. AFRICA": (152, 62, 112),
+    "SOUTH ASIA": (22, 130, 88),
     "GLOBAL": (66, 72, 82),
 }
 
@@ -142,9 +143,9 @@ def _cert_badge(draw, x_right, y, cert):
         "CLAIM": ((254, 244, 232), AMBER_CLAIM, AMBER_CLAIM),
     }
     bg, fg, bd = styles[cert]
-    fnt = F(SANS_BOLD_PATH, 7)
-    bw = _tw(draw, cert, fnt) + 8
-    bh = 12
+    fnt = F(SANS_BOLD_PATH, 8)
+    bw = _tw(draw, cert, fnt) + 9
+    bh = 13
     draw.rounded_rectangle([x_right - bw, y, x_right, y + bh], radius=2, fill=bg, outline=bd, width=1)
     draw.text((x_right - bw + 4, y + 2), cert, font=fnt, fill=fg)
     return bw
@@ -152,7 +153,7 @@ def _cert_badge(draw, x_right, y, cert):
 
 def _pin(draw, cx, cy, num, bg=CRIMSON, r=8, ring=WHITE):
     draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=bg, outline=ring, width=1)
-    fnt = F(SANS_BOLD_PATH, 8 if r >= 8 else 7)
+    fnt = F(SANS_BOLD_PATH, 9 if r >= 8 else 7)
     s = str(num)
     tw = _tw(draw, s, fnt)
     th = _th(draw, s, fnt)
@@ -168,7 +169,7 @@ def _ribbon(draw, x0, y0, text, bg=(18, 24, 34), fg=WHITE):
 
 def _draw_parchment_grain(img):
     px = img.load()
-    rng = random.Random(202611257)
+    rng = random.Random(202611258)
     for y in range(0, H, 2):
         for x in range(0, W, 2):
             d = rng.randint(-3, 3)
@@ -181,10 +182,9 @@ def _draw_parchment_grain(img):
 
 
 def _draw_hero1(draw, x0, y0, x1, y1):
-    # Hero 1: US Section 301 Tariffs on 14 Economies (container ship + 4 country tariff banners)
-    _grad_v(draw, x0, y0, x1, y0 + 70, (24, 36, 62), (48, 72, 112))
-    _grad_v(draw, x0, y0 + 70, x1, y1, (26, 68, 108), (18, 44, 78))
-    # 4 top rate pills
+    # USTR Section 301 Tariffs on 14 Economies
+    _grad_v(draw, x0, y0, x1, y0 + 76, (24, 36, 62), (48, 72, 112))
+    _grad_v(draw, x0, y0 + 76, x1, y1, (26, 68, 108), (18, 44, 78))
     pills = [
         ("CHINA 20%", (178, 36, 36)),
         ("INDIA 25%", (202, 106, 24)),
@@ -195,36 +195,35 @@ def _draw_hero1(draw, x0, y0, x1, y1):
     f_p = F(SANS_BOLD_PATH, 8)
     for txt, col in pills:
         pw = _tw(draw, txt, f_p) + 10
-        draw.rectangle([px, y0 + 8, px + pw, y0 + 22], fill=col)
-        draw.text((px + 5, y0 + 10), txt, font=f_p, fill=WHITE)
+        draw.rectangle([px, y0 + 10, px + pw, y0 + 24], fill=col)
+        draw.text((px + 5, y0 + 12), txt, font=f_p, fill=WHITE)
         px += pw + 6
-    # Cargo ship silhouette & stacked containers
-    draw.polygon([(x0 + 46, y0 + 68), (x0 + 286, y0 + 68), (x0 + 270, y0 + 84), (x0 + 58, y0 + 84)], fill=(38, 44, 52))
-    draw.rectangle([x0 + 46, y0 + 64, x0 + 286, y0 + 68], fill=CRIMSON)
-    draw.rectangle([x0 + 236, y0 + 38, x0 + 266, y0 + 64], fill=(236, 238, 242), outline=(140, 148, 160))
-    draw.rectangle([x0 + 244, y0 + 44, x0 + 258, y0 + 50], fill=(32, 42, 62))
+    draw.polygon([(x0 + 46, y0 + 74), (x0 + 286, y0 + 74), (x0 + 270, y0 + 90), (x0 + 58, y0 + 90)], fill=(38, 44, 52))
+    draw.rectangle([x0 + 46, y0 + 70, x0 + 286, y0 + 74], fill=CRIMSON)
+    draw.rectangle([x0 + 236, y0 + 44, x0 + 266, y0 + 70], fill=(236, 238, 242), outline=(140, 148, 160))
+    draw.rectangle([x0 + 244, y0 + 50, x0 + 258, y0 + 56], fill=(32, 42, 62))
     stack_cols = [(178, 36, 36), (26, 82, 148), (22, 118, 66), (202, 106, 24), (118, 48, 128), (178, 36, 36)]
     for row in range(2):
         for col_i in range(6):
             cx0 = x0 + 70 + col_i * 27
-            cy0 = y0 + 52 - row * 12
+            cy0 = y0 + 58 - row * 12
             draw.rectangle([cx0, cy0, cx0 + 24, cy0 + 10], fill=stack_cols[(col_i + row * 2) % len(stack_cols)], outline=(24, 28, 34))
-    _stipple(draw, x0 + 8, y0 + 74, x1 - 8, y1 - 4, 701, 45, [(74, 124, 166), (38, 86, 128)], 1)
-    _ribbon(draw, x0 + 30, y1 - 18, "14 ECONOMIES · SECTION 301", bg=(14, 20, 32))
+    _stipple(draw, x0 + 8, y0 + 80, x1 - 8, y1 - 4, 701, 55, [(74, 124, 166), (38, 86, 128)], 1)
+    _ribbon(draw, x0 + 30, y1 - 18, "14 ECONOMIES · 15–35%", bg=(14, 20, 32))
     _pin(draw, x0 + 14, y1 - 14, 1, bg=REGION_COLORS["N. AMERICA"])
 
 
 def _draw_hero2(draw, x0, y0, x1, y1):
-    # Hero 2: Asia chip crash Kospi 4,697.51
+    # Kospi -6.2% close 4,697.51
     _grad_v(draw, x0, y0, x1, y1, (22, 24, 30), (36, 22, 24))
     for gx in range(x0 + 16, x0 + 178, 26):
         draw.line([(gx, y0 + 18), (gx, y1 - 6)], fill=(44, 48, 58), width=1)
-    for gy in range(y0 + 22, y1 - 6, 18):
+    for gy in range(y0 + 24, y1 - 6, 18):
         draw.line([(x0 + 6, gy), (x0 + 178, gy)], fill=(44, 48, 58), width=1)
-    pts = [(x0 + 8, y0 + 26), (x0 + 40, y0 + 32), (x0 + 76, y0 + 46), (x0 + 114, y0 + 66), (x0 + 146, y0 + 82), (x0 + 172, y0 + 94)]
+    pts = [(x0 + 8, y0 + 28), (x0 + 40, y0 + 34), (x0 + 76, y0 + 50), (x0 + 114, y0 + 72), (x0 + 146, y0 + 88), (x0 + 172, y0 + 100)]
     draw.polygon(pts + [(x0 + 172, y1 - 2), (x0 + 8, y1 - 2)], fill=(120, 28, 30))
     draw.line(pts, fill=(248, 86, 72), width=3)
-    draw.ellipse([x0 + 168, y0 + 90, x0 + 176, y0 + 98], fill=(255, 210, 92))
+    draw.ellipse([x0 + 168, y0 + 96, x0 + 176, y0 + 104], fill=(255, 210, 92))
     bx0, by0, bx1, by1 = x0 + 182, y0 + 6, x1 - 6, y1 - 6
     draw.rounded_rectangle([bx0, by0, bx1, by1], radius=4, fill=(14, 18, 26), outline=(64, 72, 86), width=1)
     quotes = [
@@ -237,43 +236,42 @@ def _draw_hero2(draw, x0, y0, x1, y1):
     row_h = (by1 - by0 - 10) // len(quotes)
     f_l = F(SANS_BOLD_PATH, 8)
     for i, (k, v) in enumerate(quotes):
-        ry = by0 + 6 + i * row_h
+        ry = by0 + 7 + i * row_h
         draw.text((bx0 + 8, ry), k, font=f_l, fill=(214, 220, 232))
         tw = _tw(draw, v, f_l)
         draw.text((bx1 - tw - 8, ry), v, font=f_l, fill=(252, 92, 84))
     _ribbon(draw, x0, y0, "KOSPI CLOSE 4,697.51", bg=(14, 20, 32))
-    _pin(draw, x0 + 14, y1 - 14, 2, bg=REGION_COLORS["EAST ASIA"])
+    _pin(draw, x0 + 14, y1 - 14, 2, bg=REGION_COLORS["E & SE ASIA"])
 
 
 def _draw_hero3(draw, x0, y0, x1, y1):
-    # Hero 3: Shenzhou-24 flies Pakistan's 1st astronaut to Tiangong
+    # Shenzhou-24 docks Tiangong w/ Pakistan's 1st astronaut
     _grad_v(draw, x0, y0, x1, y1, (8, 16, 38), (20, 44, 88))
-    _stipple(draw, x0, y0 + 14, x1, y1 - 24, 303, 120, [(200, 215, 255), (255, 255, 230), (130, 150, 200)], 1)
-    # Clipped curved Earth limb
+    _stipple(draw, x0, y0 + 16, x1, y1 - 24, 303, 130, [(200, 215, 255), (255, 255, 230), (130, 150, 200)], 1)
     draw.polygon([
         (x0, y1), (x0, y1 - 12),
-        (x0 + 80, y1 - 20), (x0 + 162, y1 - 23), (x0 + 244, y1 - 20),
+        (x0 + 80, y1 - 21), (x0 + 162, y1 - 24), (x0 + 244, y1 - 21),
         (x1, y1 - 12), (x1, y1),
     ], fill=(28, 92, 168))
-    draw.line([(x0, y1 - 12), (x0 + 80, y1 - 20), (x0 + 162, y1 - 23), (x0 + 244, y1 - 20), (x1, y1 - 12)], fill=(138, 212, 255), width=2)
+    draw.line([(x0, y1 - 12), (x0 + 80, y1 - 21), (x0 + 162, y1 - 24), (x0 + 244, y1 - 21), (x1, y1 - 12)], fill=(138, 212, 255), width=2)
     rx = x0 + 58
-    draw.polygon([(rx, y1 - 26), (rx - 12, y1 - 4), (rx + 12, y1 - 4)], fill=(242, 138, 34))
-    draw.polygon([(rx, y1 - 31), (rx - 6, y1 - 6), (rx + 6, y1 - 6)], fill=(255, 224, 102))
-    draw.polygon([(rx, y0 + 20), (rx - 5, y0 + 32), (rx + 5, y0 + 32)], fill=(244, 245, 248))
-    draw.rectangle([rx - 5, y0 + 32, rx + 5, y1 - 30], fill=(238, 240, 244), outline=(170, 178, 192))
-    draw.rectangle([rx - 9, y1 - 50, rx - 5, y1 - 30], fill=(214, 218, 226))
-    draw.rectangle([rx + 5, y1 - 50, rx + 9, y1 - 30], fill=(214, 218, 226))
+    draw.polygon([(rx, y1 - 28), (rx - 12, y1 - 4), (rx + 12, y1 - 4)], fill=(242, 138, 34))
+    draw.polygon([(rx, y1 - 33), (rx - 6, y1 - 6), (rx + 6, y1 - 6)], fill=(255, 224, 102))
+    draw.polygon([(rx, y0 + 22), (rx - 5, y0 + 34), (rx + 5, y0 + 34)], fill=(244, 245, 248))
+    draw.rectangle([rx - 5, y0 + 34, rx + 5, y1 - 32], fill=(238, 240, 244), outline=(170, 178, 192))
+    draw.rectangle([rx - 9, y1 - 54, rx - 5, y1 - 32], fill=(214, 218, 226))
+    draw.rectangle([rx + 5, y1 - 54, rx + 9, y1 - 32], fill=(214, 218, 226))
     for i in range(10):
         t = i / 9.0
         px = int(rx + 16 + t * 112)
-        py = int((y0 + 32) + math.sin(t * 2.2) * -12 + 24 * (1 - t))
+        py = int((y0 + 34) + math.sin(t * 2.2) * -12 + 24 * (1 - t))
         draw.ellipse([px - 2, py - 2, px + 2, py + 2], fill=(255, 206, 74))
-    sx, sy = x0 + 232, y0 + 50
+    sx, sy = x0 + 232, y0 + 54
     for dx in (-34, -20, 14, 28):
-        draw.rectangle([sx + dx, sy - 20, sx + dx + 8, sy + 20], fill=(38, 86, 152), outline=(120, 174, 232))
+        draw.rectangle([sx + dx, sy - 22, sx + dx + 8, sy + 22], fill=(38, 86, 152), outline=(120, 174, 232))
     draw.rectangle([sx - 40, sy - 3, sx + 40, sy + 3], fill=(208, 214, 224))
     draw.rectangle([sx - 16, sy - 6, sx + 16, sy + 6], fill=(246, 248, 252))
-    fx, fy = x1 - 74, y0 + 18
+    fx, fy = x1 - 74, y0 + 20
     draw.rectangle([fx, fy, fx + 30, fy + 18], fill=(198, 30, 34), outline=WHITE)
     draw.ellipse([fx + 4, fy + 4, fx + 9, fy + 9], fill=(250, 210, 48))
     pxf = fx + 36
@@ -281,129 +279,99 @@ def _draw_hero3(draw, x0, y0, x1, y1):
     draw.rectangle([pxf, fy, pxf + 8, fy + 18], fill=WHITE)
     draw.pieslice([pxf + 12, fy + 3, pxf + 24, fy + 15], 45, 285, fill=WHITE)
     _ribbon(draw, x0, y0, "00:18 UTC · DOCKS 03:56", bg=(14, 20, 32))
-    _pin(draw, x0 + 14, y1 - 14, 3, bg=REGION_COLORS["EAST ASIA"])
+    _pin(draw, x0 + 14, y1 - 14, 3, bg=REGION_COLORS["E & SE ASIA"])
 
 
 def _draw_mid_art(draw, num, reg, x0, y0, x1, y1):
     w = x1 - x0
     if num == 4:
-        # Dhaka garment pay +36%: 12,500 -> 17,000 TAKA
-        _grad_v(draw, x0, y0, x1, y1, (238, 246, 238), (224, 238, 228))
-        fx = x0 + 74
-        draw.polygon([(fx, y1 - 14), (fx, y0 + 34), (fx + 30, y0 + 22), (fx + 30, y0 + 34), (fx + 60, y0 + 22), (fx + 60, y0 + 34), (fx + 90, y0 + 22), (fx + 90, y1 - 14)], fill=(192, 206, 196), outline=(140, 158, 146))
-        draw.rectangle([x0 + 88, y0 + 44, x0 + 116, y1 - 8], fill=(128, 140, 136))
-        draw.rectangle([x0 + 124, y0 + 28, x0 + 158, y1 - 8], fill=GREEN_CONF)
-        draw.line([(x0 + 102, y0 + 42), (x0 + 141, y0 + 22)], fill=(18, 102, 54), width=3)
-        draw.text((x0 + 8, y0 + 20), "+36%", font=F(SERIF_BOLD_PATH, 19), fill=GREEN_CONF)
-        draw.text((x0 + 8, y0 + 42), "Tk 12.5k->17k", font=F(SANS_BOLD_PATH, 8), fill=INK)
-        _ribbon(draw, x0, y0, "17,000 TAKA · 4–2", bg=GREEN_CONF)
+        # UK Ofgem +26% to £2,166
+        _grad_v(draw, x0, y0, x1, y1, (236, 242, 248), (248, 238, 224))
+        hx = x0 + 46
+        draw.polygon([(hx - 26, y0 + 40), (hx, y0 + 18), (hx + 26, y0 + 40)], fill=(142, 54, 46))
+        draw.rectangle([hx - 21, y0 + 40, hx + 21, y1 - 8], fill=(224, 212, 194), outline=(170, 156, 140))
+        draw.pieslice([hx - 9, y0 + 45, hx + 9, y0 + 67], 160, 380, fill=(24, 118, 206))
+        draw.text((x0 + 92, y0 + 20), "+26%", font=F(SERIF_BOLD_PATH, 24), fill=CRIMSON)
+        draw.text((x0 + 92, y0 + 48), "£1,723 -> £2,166", font=F(SANS_BOLD_PATH, 10), fill=BLUE_OFF)
+        _ribbon(draw, x0, y0, "OFGEM CAP · 1 JAN", bg=BLUE_OFF)
     elif num == 5:
-        # Cairo Ring Road tanker explosion: 31+ dead
+        # Cairo Ring Road tanker blaze 31+ dead
         _grad_v(draw, x0, y0, x1, y1, (38, 28, 28), (74, 40, 32))
-        draw.rectangle([x0, y1 - 14, x1, y1], fill=(56, 56, 62))
-        draw.rectangle([x0 + 36, y1 - 30, x0 + 106, y1 - 14], fill=(160, 166, 174), outline=DARK_RULE)
-        draw.ellipse([x0 + 62, y0 + 18, x0 + 102, y0 + 54], fill=(238, 92, 22))
-        draw.ellipse([x0 + 70, y0 + 26, x0 + 94, y0 + 48], fill=(255, 214, 64))
-        draw.text((x0 + 112, y0 + 22), "31+", font=F(SERIF_BOLD_PATH, 20), fill=WHITE)
-        draw.text((x0 + 112, y0 + 44), "DEAD", font=F(SANS_BOLD_PATH, 8), fill=(255, 196, 172))
+        draw.rectangle([x0, y1 - 16, x1, y1], fill=(56, 56, 62))
+        draw.rectangle([x0 + 44, y1 - 34, x0 + 122, y1 - 16], fill=(160, 166, 174), outline=DARK_RULE)
+        draw.ellipse([x0 + 74, y0 + 18, x0 + 118, y0 + 58], fill=(238, 92, 22))
+        draw.ellipse([x0 + 82, y0 + 26, x0 + 110, y0 + 50], fill=(255, 214, 64))
+        draw.text((x0 + 134, y0 + 22), "31+", font=F(SERIF_BOLD_PATH, 24), fill=WHITE)
+        draw.text((x0 + 134, y0 + 48), "DEAD", font=F(SANS_BOLD_PATH, 9), fill=(255, 196, 172))
         _ribbon(draw, x0, y0, "CAIRO RING ROAD", bg=CRIMSON)
     elif num == 6:
-        # UK Ofgem cap +26% to £2,166
-        _grad_v(draw, x0, y0, x1, y1, (236, 242, 248), (248, 238, 224))
-        hx = x0 + 34
-        draw.polygon([(hx - 22, y0 + 38), (hx, y0 + 18), (hx + 22, y0 + 38)], fill=(142, 54, 46))
-        draw.rectangle([hx - 18, y0 + 38, hx + 18, y1 - 8], fill=(224, 212, 194), outline=(170, 156, 140))
-        draw.pieslice([hx - 8, y0 + 43, hx + 8, y0 + 63], 160, 380, fill=(24, 118, 206))
-        draw.text((x0 + 72, y0 + 20), "+26%", font=F(SERIF_BOLD_PATH, 22), fill=CRIMSON)
-        draw.text((x0 + 72, y0 + 46), "£1,723 -> £2,166", font=F(SANS_BOLD_PATH, 9), fill=BLUE_OFF)
-        _ribbon(draw, x0, y0, "OFGEM CAP · 1 JAN", bg=BLUE_OFF)
-    elif num == 7:
-        # Australia & Solomons A$740m pact
-        _grad_v(draw, x0, y0, x1, y1, (228, 240, 248), (244, 241, 232))
-        draw.polygon([(x0 + w // 2, y0 + 12), (x0 + 46, y1 - 14), (x1 - 46, y1 - 14)], fill=None, outline=(145, 162, 178), width=2)
-        fx0, fy0 = x0 + 14, y0 + 20
-        draw.rectangle([fx0, fy0, fx0 + 40, fy0 + 24], fill=(16, 48, 124), outline=WHITE)
-        draw.line([(fx0, fy0 + 7), (fx0 + 18, fy0 + 7)], fill=CRIMSON, width=2)
-        draw.line([(fx0 + 9, fy0), (fx0 + 9, fy0 + 14)], fill=CRIMSON, width=2)
-        sx0 = x1 - 54
-        draw.polygon([(sx0, fy0), (sx0 + 40, fy0), (sx0, fy0 + 24)], fill=(18, 86, 156))
-        draw.polygon([(sx0 + 40, fy0), (sx0 + 40, fy0 + 24), (sx0, fy0 + 24)], fill=(24, 118, 64))
-        draw.line([(sx0, fy0 + 24), (sx0 + 40, fy0)], fill=(238, 194, 42), width=3)
-        draw.rounded_rectangle([x0 + 30, y1 - 19, x1 - 26, y1 - 5], radius=2, fill=(24, 52, 92))
-        draw.text((x0 + 36, y1 - 16), "NO FOREIGN BASES", font=F(SANS_BOLD_PATH, 8), fill=WHITE)
-        _ribbon(draw, x0, y0, "A$740M SECURITY PACT", bg=REGION_COLORS["OCEANIA"])
-    elif num == 8:
-        # UNODC 47,000 women killed / 5 per hr
-        _grad_v(draw, x0, y0, x1, y1, (248, 244, 238), (238, 232, 224))
-        draw.text((x0 + 8, y0 + 18), "47,000", font=F(SERIF_BOLD_PATH, 19), fill=CRIMSON)
-        draw.text((x0 + 9, y0 + 40), "5 KILLED / HR", font=F(SANS_BOLD_PATH, 8), fill=(72, 68, 64))
-        bars = [
-            ("Africa", 2.9, (118, 48, 128)),
-            ("Amer.", 1.4, (24, 108, 164)),
-            ("Ocean.", 1.1, (22, 118, 68)),
-            ("Asia", 0.6, (182, 42, 42)),
-            ("Europe", 0.5, (26, 68, 134)),
-        ]
-        bx = x0 + 114
-        f_b = F(SANS_BOLD_PATH, 7)
-        for idx, (lbl, val, col) in enumerate(bars):
-            by = y0 + 17 + idx * 10
-            draw.text((x0 + 82, by), lbl, font=f_b, fill=INK)
-            bw = int((val / 2.9) * 50)
-            draw.rectangle([bx, by + 1, bx + bw, by + 7], fill=col)
-            draw.text((bx + bw + 3, by), f"{val}", font=f_b, fill=INK)
-        _ribbon(draw, x0, y0, "UNODC REPORT", bg=(96, 28, 36))
-    elif num == 9:
-        # Ukraine 5 regions out / Zaporizhzhia grid
+        # Ukraine 5 regions grid cuts
         _grad_v(draw, x0, y0, x1, y1, (24, 34, 56), (48, 56, 76))
-        px = x0 + 48
-        draw.line([(px, y0 + 18), (px - 14, y1 - 8)], fill=(190, 198, 210), width=2)
-        draw.line([(px, y0 + 18), (px + 14, y1 - 8)], fill=(190, 198, 210), width=2)
-        draw.line([(px - 18, y0 + 30), (px + 18, y0 + 30)], fill=(190, 198, 210), width=2)
-        draw.polygon([(x0 + 88, y0 + 22), (x0 + 78, y0 + 40), (x0 + 86, y0 + 40), (x0 + 80, y0 + 56), (x0 + 96, y0 + 36), (x0 + 88, y0 + 36)], fill=(252, 208, 62))
-        draw.text((x0 + 106, y0 + 22), "5", font=F(SERIF_BOLD_PATH, 22), fill=(252, 208, 62))
-        draw.text((x0 + 106, y0 + 45), "REGIONS", font=F(SANS_BOLD_PATH, 8), fill=WHITE)
+        px = x0 + 58
+        draw.line([(px, y0 + 18), (px - 18, y1 - 8)], fill=(190, 198, 210), width=2)
+        draw.line([(px, y0 + 18), (px + 18, y1 - 8)], fill=(190, 198, 210), width=2)
+        draw.line([(px - 22, y0 + 32), (px + 22, y0 + 32)], fill=(190, 198, 210), width=2)
+        draw.polygon([(x0 + 106, y0 + 22), (x0 + 96, y0 + 42), (x0 + 104, y0 + 42), (x0 + 98, y0 + 60), (x0 + 116, y0 + 38), (x0 + 106, y0 + 38)], fill=(252, 208, 62))
+        draw.text((x0 + 130, y0 + 20), "5", font=F(SERIF_BOLD_PATH, 24), fill=(252, 208, 62))
+        draw.text((x0 + 130, y0 + 48), "REGIONS OUT", font=F(SANS_BOLD_PATH, 9), fill=WHITE)
         _ribbon(draw, x0, y0, "POWER GRID HIT", bg=(14, 20, 32))
-    elif num == 10:
-        # Cape Town Phala Phala report voided
+    elif num == 7:
+        # Dhaka garment pay +36%: 12,500 -> 17,000 TAKA
+        _grad_v(draw, x0, y0, x1, y1, (238, 246, 238), (224, 238, 228))
+        fx = x0 + 98
+        draw.polygon([(fx, y1 - 14), (fx, y0 + 34), (fx + 32, y0 + 22), (fx + 32, y0 + 34), (fx + 64, y0 + 22), (fx + 64, y0 + 34), (fx + 96, y0 + 22), (fx + 96, y1 - 14)], fill=(192, 206, 196), outline=(140, 158, 146))
+        draw.rectangle([x0 + 112, y0 + 46, x0 + 144, y1 - 8], fill=(128, 140, 136))
+        draw.rectangle([x0 + 154, y0 + 28, x0 + 190, y1 - 8], fill=GREEN_CONF)
+        draw.line([(x0 + 128, y0 + 44), (x0 + 172, y0 + 22)], fill=(18, 102, 54), width=3)
+        draw.text((x0 + 12, y0 + 20), "+36%", font=F(SERIF_BOLD_PATH, 22), fill=GREEN_CONF)
+        draw.text((x0 + 12, y0 + 46), "12.5k -> 17k tk", font=F(SANS_BOLD_PATH, 9), fill=INK)
+        _ribbon(draw, x0, y0, "17,000 TAKA · 4–2 VOTE", bg=GREEN_CONF)
+    elif num == 8:
+        # Solomons & Australia A$740m pact
+        _grad_v(draw, x0, y0, x1, y1, (228, 240, 248), (244, 241, 232))
+        draw.polygon([(x0 + w // 2, y0 + 14), (x0 + 56, y1 - 14), (x1 - 56, y1 - 14)], fill=None, outline=(145, 162, 178), width=2)
+        fx0, fy0 = x0 + 20, y0 + 20
+        draw.rectangle([fx0, fy0, fx0 + 44, fy0 + 26], fill=(16, 48, 124), outline=WHITE)
+        draw.line([(fx0, fy0 + 7), (fx0 + 20, fy0 + 7)], fill=CRIMSON, width=2)
+        draw.line([(fx0 + 10, fy0), (fx0 + 10, fy0 + 14)], fill=CRIMSON, width=2)
+        sx0 = x1 - 64
+        draw.polygon([(sx0, fy0), (sx0 + 44, fy0), (sx0, fy0 + 26)], fill=(18, 86, 156))
+        draw.polygon([(sx0 + 44, fy0), (sx0 + 44, fy0 + 26), (sx0, fy0 + 26)], fill=(24, 118, 64))
+        draw.line([(sx0, fy0 + 26), (sx0 + 44, fy0)], fill=(238, 194, 42), width=3)
+        draw.rounded_rectangle([x0 + 50, y1 - 21, x1 - 50, y1 - 6], radius=2, fill=(24, 52, 92))
+        draw.text((x0 + 60, y1 - 18), "NO FOREIGN BASES", font=F(SANS_BOLD_PATH, 9), fill=WHITE)
+        _ribbon(draw, x0, y0, "A$740M SECURITY PACT", bg=REGION_COLORS["OCEANIA"])
+    elif num == 9:
+        # South Africa High Court voids Phala Phala report
         _grad_v(draw, x0, y0, x1, y1, (242, 238, 230), (230, 224, 214))
-        draw.line([(x0 + 28, y0 + 44), (x0 + 52, y0 + 24)], fill=(104, 64, 32), width=4)
-        draw.rectangle([x0 + 44, y0 + 18, x0 + 62, y0 + 32], fill=(128, 78, 40))
-        draw.rectangle([x0 + 22, y0 + 52, x0 + 64, y0 + 58], fill=(116, 70, 34))
-        draw.rounded_rectangle([x0 + 78, y0 + 24, x1 - 12, y0 + 48], radius=3, fill=CRIMSON)
-        draw.text((x0 + 88, y0 + 29), "VOIDED", font=F(SANS_BOLD_PATH, 13), fill=WHITE)
-        _ribbon(draw, x0, y0, "HIGH COURT RULING", bg=REGION_COLORS["AFRICA"])
-    elif num == 11:
+        draw.line([(x0 + 36, y0 + 46), (x0 + 64, y0 + 24)], fill=(104, 64, 32), width=4)
+        draw.rectangle([x0 + 56, y0 + 18, x0 + 76, y0 + 34], fill=(128, 78, 40))
+        draw.rectangle([x0 + 28, y0 + 54, x0 + 78, y0 + 60], fill=(116, 70, 34))
+        draw.rounded_rectangle([x0 + 98, y0 + 24, x1 - 22, y0 + 50], radius=3, fill=CRIMSON)
+        draw.text((x0 + 114, y0 + 29), "VOIDED", font=F(SANS_BOLD_PATH, 15), fill=WHITE)
+        _ribbon(draw, x0, y0, "HIGH COURT RULING", bg=REGION_COLORS["SUB-SAH."])
+    elif num == 10:
         # Netanyahu Case 4000 judges urge dropping bribery charge
         _grad_v(draw, x0, y0, x1, y1, (244, 240, 234), (234, 228, 220))
-        cx = x0 + 42
-        draw.line([(cx, y0 + 20), (cx, y0 + 56)], fill=INK, width=2)
-        draw.line([(cx - 18, y0 + 28), (cx + 18, y0 + 28)], fill=INK, width=2)
-        draw.arc([cx - 24, y0 + 28, cx - 10, y0 + 46], 0, 180, fill=MUTED, width=2)
-        draw.arc([cx + 10, y0 + 28, cx + 24, y0 + 46], 0, 180, fill=MUTED, width=2)
-        draw.text((x0 + 74, y0 + 22), "CASE 4000", font=F(SANS_BOLD_PATH, 11), fill=INK)
-        draw.text((x0 + 74, y0 + 38), "DROP BRIBE", font=F(SANS_BOLD_PATH, 9), fill=CRIMSON)
+        cx = x0 + 52
+        draw.line([(cx, y0 + 20), (cx, y0 + 58)], fill=INK, width=2)
+        draw.line([(cx - 20, y0 + 28), (cx + 20, y0 + 28)], fill=INK, width=2)
+        draw.arc([cx - 26, y0 + 28, cx - 12, y0 + 48], 0, 180, fill=MUTED, width=2)
+        draw.arc([cx + 12, y0 + 28, cx + 26, y0 + 48], 0, 180, fill=MUTED, width=2)
+        draw.text((x0 + 94, y0 + 22), "CASE 4000", font=F(SANS_BOLD_PATH, 13), fill=INK)
+        draw.text((x0 + 94, y0 + 42), "DROP BRIBE CHARGE", font=F(SANS_BOLD_PATH, 9), fill=CRIMSON)
         _ribbon(draw, x0, y0, "TRIAL PANEL", bg=BLUE_OFF)
-    elif num == 12:
-        # Coalition strikes Hodeidah; Saudis down 4 drones
-        _grad_v(draw, x0, y0, x1, y1, (24, 38, 68), (54, 72, 102))
-        draw.rectangle([x0, y1 - 16, x1, y1], fill=(22, 48, 78))
-        for dx, dy in [(x0 + 74, y0 + 26), (x0 + 108, y0 + 22), (x0 + 138, y0 + 32), (x0 + 162, y0 + 24)]:
-            draw.line([(x0 + 36, y1 - 18), (dx, dy)], fill=(90, 198, 240), width=1)
-            draw.ellipse([dx - 5, dy - 5, dx + 5, dy + 5], fill=(246, 134, 34))
-            draw.ellipse([dx - 2, dy - 2, dx + 2, dy + 2], fill=(255, 228, 112))
-        _ribbon(draw, x0, y0, "4 DRONES DOWNED", bg=(14, 20, 32))
-    elif num == 13:
-        # Cartagena supermarket siege ends: 20 hostages freed
+    elif num == 11:
+        # Cartagena Éxito siege ends: 20 hostages freed
         _grad_v(draw, x0, y0, x1, y1, (236, 244, 246), (222, 232, 236))
-        draw.rectangle([x0 + 20, y0 + 22, x0 + 102, y1 - 12], fill=WHITE, outline=(120, 132, 146))
-        draw.rectangle([x0 + 20, y0 + 22, x0 + 102, y0 + 34], fill=(238, 194, 42))
-        draw.text((x0 + 44, y0 + 24), "ÉXITO", font=F(SANS_BOLD_PATH, 8), fill=INK)
-        draw.rounded_rectangle([x0 + 108, y0 + 24, x1 - 12, y0 + 46], radius=2, fill=GREEN_CONF)
-        draw.text((x0 + 114, y0 + 29), "ALL FREED", font=F(SANS_BOLD_PATH, 9), fill=WHITE)
+        draw.rectangle([x0 + 26, y0 + 22, x0 + 124, y1 - 12], fill=WHITE, outline=(120, 132, 146))
+        draw.rectangle([x0 + 26, y0 + 22, x0 + 124, y0 + 36], fill=(238, 194, 42))
+        draw.text((x0 + 56, y0 + 24), "ÉXITO", font=F(SANS_BOLD_PATH, 9), fill=INK)
+        draw.rounded_rectangle([x0 + 134, y0 + 24, x1 - 24, y0 + 48], radius=2, fill=GREEN_CONF)
+        draw.text((x0 + 144, y0 + 30), "ALL FREED", font=F(SANS_BOLD_PATH, 10), fill=WHITE)
         _ribbon(draw, x0, y0, "DAWN RAID · 20 SAVED", bg=REGION_COLORS["LAT. AM."])
 
-    _pin(draw, x1 - 13, y1 - 12, num, bg=REGION_COLORS[reg], r=7)
+    _pin(draw, x1 - 14, y1 - 13, num, bg=REGION_COLORS[reg], r=8)
 
 
 def _draw_world_map(draw, x0, y0, x1, y1):
@@ -435,22 +403,20 @@ def _draw_world_map(draw, x0, y0, x1, y1):
 
     pins = [
         (1, -77, 39, "N. AMERICA"),   # Washington USTR
-        (2, 127, 37, "EAST ASIA"),    # Seoul Kospi
-        (3, 100, 41, "EAST ASIA"),    # Jiuquan Shenzhou-24
-        (4, 90, 24, "S & SE ASIA"),   # Dhaka wage
-        (5, 31, 30, "AFRICA"),        # Cairo Giza
-        (6, 0, 52, "EUROPE"),         # London Ofgem
-        (7, 149, -35, "OCEANIA"),     # Canberra/Solomons
-        (8, -74, 41, "GLOBAL"),       # UNODC NY
-        (9, 32, 49, "EUROPE"),        # Ukraine 5 regions
-        (10, 18, -34, "AFRICA"),      # Cape Town Phala Phala
-        (11, 35, 31, "M. EAST"),      # Jerusalem Case 4000
-        (12, 43, 15, "M. EAST"),      # Hodeidah/Ras Tanura
-        (13, -75, 10, "LAT. AM."),    # Cartagena Colombia
+        (2, 127, 37, "E & SE ASIA"),  # Seoul Kospi
+        (3, 100, 41, "E & SE ASIA"),  # Jiuquan Shenzhou-24
+        (4, 0, 52, "EUROPE"),         # London Ofgem
+        (5, 31, 30, "N. AFRICA"),     # Cairo Giza
+        (6, 32, 49, "EUROPE"),        # Ukraine
+        (7, 90, 24, "SOUTH ASIA"),    # Dhaka wage
+        (8, 149, -35, "OCEANIA"),     # Canberra/Solomons
+        (9, 18, -34, "SUB-SAH."),     # Cape Town
+        (10, 35, 31, "M. EAST"),      # Jerusalem Case 4000
+        (11, -75, 10, "LAT. AM."),    # Cartagena
     ]
     for num, lon, lat, reg in pins:
         px, py = ll(lon, lat)
-        _pin(draw, px, py, num, bg=REGION_COLORS[reg], r=6)
+        _pin(draw, px, py, num, bg=REGION_COLORS[reg], r=7)
 
 
 def main():
@@ -458,15 +424,15 @@ def main():
     _draw_parchment_grain(img)
     draw = ImageDraw.Draw(img)
 
-    # Top bar
+    # Top dateline
     draw.text((14, 10), "THE WORLD IN ONE DAY", font=F(SANS_BOLD_PATH, 9), fill=MUTED)
-    tr = "50 STORIES · 9 REGIONS · EVERY ONE FIRST REPORTED WED 25 NOV 2026"
+    tr = "35 DATED STORIES · 10 REGIONS · ALL FROM WEDNESDAY 25 NOV 2026"
     draw.text((1010 - _tw(draw, tr, F(SANS_BOLD_PATH, 9)), 10), tr, font=F(SANS_BOLD_PATH, 9), fill=CRIMSON)
     draw.line([(14, 24), (1010, 24)], fill=DARK_RULE, width=2)
 
     # Masthead
     m_txt = "Wednesday 25 November 2026"
-    m_f = F(SERIF_BOLD_PATH, 45)
+    m_f = F(SERIF_BOLD_PATH, 46)
     draw.text(((W - _tw(draw, m_txt, m_f)) // 2, 27), m_txt, font=m_f, fill=INK)
     sub = "US proposes tariffs on 14 economies · AI doubts sink Asian chips · Pakistan's first astronaut reaches Tiangong"
     sub_f = F(SERIF_ITAL_PATH, 12)
@@ -475,11 +441,11 @@ def main():
     # 6 KPI metrics
     kpis = [
         ("35%", "top US 301 tariff (Vietnam); China 20% (1)", CRIMSON),
-        ("-6.2%", "Kospi close 4,697.51; Hynix -11.1% (2)", CRIMSON),
+        ("-6.2%", "Kospi closes at 4,697.51; Hynix -11.1% (2)", CRIMSON),
         ("1st", "Pakistani reaches Tiangong at 03:56 UTC (3)", BLUE_OFF),
-        ("31+", "killed in Cairo ring-road tanker blaze (5)", CRIMSON),
-        ("+26%", "UK Ofgem cap lifted to £2,166/yr (6)", CRIMSON),
-        ("+36%", "Dhaka garment pay raised to 17,000 tk (4)", GREEN_CONF),
+        ("+26%", "UK Ofgem energy cap rises to £2,166 (4)", CRIMSON),
+        ("31+", "killed in Cairo ring-road tanker fire (5)", CRIMSON),
+        ("+36%", "Dhaka garment pay raised to 17,000 tk (7)", GREEN_CONF),
     ]
     tot_w = 996
     kw = tot_w / 6.0
@@ -488,35 +454,60 @@ def main():
         if i > 0:
             draw.line([(kx - 6, 98), (kx - 6, 134)], fill=RULE, width=1)
         draw.text((kx, 97), num_s, font=F(SERIF_BOLD_PATH, 18), fill=col)
-        _draw_lines(draw, kx, 118, desc, F(SANS_REG_PATH, 8), MUTED, int(kw - 10), 9, 2)
+        _draw_lines(draw, kx, 118, desc, F(SANS_REG_PATH, 8), MUTED, int(kw - 10), 10, 2)
 
-    # Region bar (sum = 50 exact count)
-    segs = [
-        ("EUROPE 12", 12, REGION_COLORS["EUROPE"]),
-        ("N. AMERICA 9", 9, REGION_COLORS["N. AMERICA"]),
-        ("M. EAST 7", 7, REGION_COLORS["M. EAST"]),
-        ("AFRICA 6", 6, REGION_COLORS["AFRICA"]),
-        ("E. ASIA 5", 5, REGION_COLORS["EAST ASIA"]),
-        ("OCEANIA 5", 5, REGION_COLORS["OCEANIA"]),
-        ("LAT 3", 3, REGION_COLORS["LAT. AM."]),
-        ("SEA 2", 2, REGION_COLORS["S & SE ASIA"]),
-        ("1", 1, REGION_COLORS["GLOBAL"]),
+    # 24 Briefs (#12..#35) defined cleanly so region bar sums automatically = 35
+    briefs = [
+        (12, "M. EAST", "Hodeidah:", "Coalition hits Hodeidah; Saudis down 4 drones (AP)"),
+        (13, "M. EAST", "Hormuz:", "IRGC claims 2 tankers hit mines in Strait [CLAIM] (Reuters)"),
+        (14, "EUROPE", "Samara:", "Ukrainian drones strike Syzran & Kuibyshev refineries (Kyiv Ind.)"),
+        (15, "EUROPE", "Strasbourg:", "EU unveils Quantum Act & €50bn tech fund (Reuters)"),
+        (16, "N. AMERICA", "Washington:", "US Q3 real GDP revised up to 4.3% annualized (BEA)"),
+        (17, "N. AMERICA", "Iowa:", "US Army detonates 5t degraded lead azide safely (AP)"),
+        (18, "EUROPE", "Brussels:", "Puigdemont sets Dec 12 date to end 9-year Spain exile (Al Jazeera)"),
+        (19, "EUROPE", "London:", "easyJet net profit plunges 96% to £20m on fuel costs (Guardian)"),
+        (20, "OCEANIA", "Canberra:", "Australia annual inflation jumps to 4.9% 3-yr high (ABS)"),
+        (21, "OCEANIA", "Canberra:", "Parliament apologises to LGBTQ+ military veterans (DFAT)"),
+        (22, "EUROPE", "London:", "Tube strike halts Circle & Piccadilly lines from 10:00 UTC (BBC)"),
+        (23, "EUROPE", "London:", "Independent review finds Met Police remains racist (Guardian)"),
+        (24, "EUROPE", "Brussels:", "EU sanctions 15 firms tied to Russian military complex (EU)"),
+        (25, "EUROPE", "Darmstadt:", "ESA Hera shows first close-up images of Dimorphos (ESA)"),
+        (26, "EUROPE", "Geneva:", "FIDE World Chess: Gukesh & Sindarov draw Game 1 (FIDE)"),
+        (27, "LAT. AM.", "Brasília:", "Brazil permanently recalls ambassador to Argentina (AP)"),
+        (28, "N. AMERICA", "Washington:", "NATO chief Rutte holds Mar-a-Lago talks w/ Trump (Reuters)"),
+        (29, "N. AMERICA", "Chicago:", "81.5m Thanksgiving holiday travelers face storm delays (CNN)"),
+        (30, "SUB-SAH.", "Enugu:", "Nollywood pioneer Pete Edochie dies aged 79 (VON)"),
+        (31, "SUB-SAH.", "Khartoum:", "Sudan rejects Ethiopia peace talks amid clashes (Reuters)"),
+        (32, "N. AFRICA", "Al-Warraq:", "At least 20+ injured alongside 31 dead in tanker blaze (Health Min)"),
+        (33, "E & SE ASIA", "Jakarta:", "OECD chief Cormann meets Prabowo on accession (Antara)"),
+        (34, "E & SE ASIA", "Seoul:", "Births jump 12.2% YoY; Seoul subway strike averted (Yonhap)"),
+        (35, "GLOBAL", "UN / New York:", "UNODC reports 47,000 women killed by partner/kin (5/hr) (UN)"),
     ]
-    ry0, ry1 = 140, 154
+    counts = {k: 0 for k in REGION_COLORS}
+    hero_regs = ["N. AMERICA", "E & SE ASIA", "E & SE ASIA"]
+    card_regs = ["EUROPE", "N. AFRICA", "EUROPE", "SOUTH ASIA", "OCEANIA", "SUB-SAH.", "M. EAST", "LAT. AM."]
+    for r in hero_regs + card_regs:
+        counts[r] += 1
+    for _, r, _, _ in briefs:
+        counts[r] += 1
+
+    segs = [(k, counts[k], REGION_COLORS[k]) for k in REGION_COLORS if counts[k] > 0]
+    ry0, ry1 = 141, 156
     cur_x = 14
     f_seg = F(SANS_BOLD_PATH, 8)
     for idx, (lbl, cnt, col) in enumerate(segs):
-        sw = int(round(tot_w * (cnt / 50.0))) if idx < len(segs) - 1 else (1010 - cur_x)
+        sw = int(round(tot_w * (cnt / 35.0))) if idx < len(segs) - 1 else (1010 - cur_x)
         draw.rectangle([cur_x, ry0, cur_x + sw - 1, ry1], fill=col)
-        tw = _tw(draw, lbl, f_seg)
+        s_txt = f"{lbl} {cnt}" if sw > 48 else f"{cnt}"
+        tw = _tw(draw, s_txt, f_seg)
         if tw + 2 < sw:
-            draw.text((cur_x + (sw - tw) // 2, ry0 + 2), lbl, font=f_seg, fill=WHITE)
+            draw.text((cur_x + (sw - tw) // 2, ry0 + 3), s_txt, font=f_seg, fill=WHITE)
         cur_x += sw
 
     # UTC ticker
-    draw.rectangle([14, 158, 108, 173], fill=INK)
-    draw.text((21, 160), "THE DAY IN UTC", font=F(SANS_BOLD_PATH, 8), fill=GOLD)
-    draw.rectangle([108, 158, 1010, 173], fill=(238, 232, 220), outline=RULE)
+    draw.rectangle([14, 160, 108, 176], fill=INK)
+    draw.text((21, 163), "THE DAY IN UTC", font=F(SANS_BOLD_PATH, 8), fill=GOLD)
+    draw.rectangle([108, 160, 1010, 176], fill=(238, 232, 220), outline=RULE)
     ticks = [
         ("00:18", "Shenzhou-24 liftoff"),
         ("00:30", "Aus CPI 4.9%"),
@@ -528,183 +519,138 @@ def main():
     ]
     tx = 116
     for tm, ev in ticks:
-        draw.text((tx, 160), tm, font=F(SANS_BOLD_PATH, 8), fill=CRIMSON)
+        draw.text((tx, 163), tm, font=F(SANS_BOLD_PATH, 8), fill=CRIMSON)
         tx += _tw(draw, tm, F(SANS_BOLD_PATH, 8)) + 3
-        draw.text((tx, 160), ev, font=F(SANS_REG_PATH, 8), fill=INK)
+        draw.text((tx, 163), ev, font=F(SANS_REG_PATH, 8), fill=INK)
         tx += _tw(draw, ev, F(SANS_REG_PATH, 8)) + 13
 
-    # Top 3 Hero Cards with WHY IT MATTERS
+    # Top 3 Hero Cards
     heroes = [
         (
             1, _draw_hero1, "N. AMERICA", "WASHINGTON · TRADE", "OFFICIAL",
             "US proposes tariffs up to 35% on 14 economies",
-            "USTR cites excess capacity: Vietnam up to 35%, India 25%, China 20%, EU 15%. USTR · Reuters",
+            "USTR cites excess capacity: Vietnam 35%, India 25%, China 20%, EU 15% (Greer). USTR · Reuters",
             "Broadest Section 301 salvo; hearings open in Jan.",
         ),
         (
-            2, _draw_hero2, "EAST ASIA", "SEOUL · TAIPEI · TOKYO", "CONFIRMED",
+            2, _draw_hero2, "E & SE ASIA", "SEOUL · TAIPEI · TOKYO", "CONFIRMED",
             "AI doubts sink Asian chips; Kospi drops 6.2%",
-            "Kospi closes -6.16% at 4,697.51; SK Hynix -11.1%, Samsung -9.9%, Taiex -4.8%. Yonhap · Reuters",
-            "Sharpest test of AI hardware spending boom.",
+            "Kospi closes at 4,697.51 (-6.16%); SK Hynix -11.1%, Samsung -9.9%, Taiex -4.8%. Yonhap · Reuters",
+            "Sharpest test yet of AI hardware spending boom.",
         ),
         (
-            3, _draw_hero3, "EAST ASIA", "JIUQUAN · ORBIT · SPACE", "OFFICIAL",
+            3, _draw_hero3, "E & SE ASIA", "JIUQUAN · ORBIT · SPACE", "OFFICIAL",
             "Shenzhou-24 flies Pakistan's 1st astronaut",
-            "Muhammad Zeeshan Ali (40) lifts off 00:18 UTC with Chinese crew, docks 03:56 UTC. Xinhua · AA",
-            "China's station receives its first foreign guest.",
+            "Muhammad Zeeshan Ali (40) lifts off 00:18 UTC with Chinese crew and docks 03:56 UTC. Xinhua · AA",
+            "First foreign national aboard China's orbital lab.",
         ),
     ]
     hc_w = 324
     hc_gap = 12
-    hy0 = 179
-    art_h = 94
+    hy0 = 182
+    art_h = 104
     for idx, (num, fn, reg, loc, cert, hd, dk, wim) in enumerate(heroes):
         hx = 14 + idx * (hc_w + hc_gap)
         fn(draw, hx, hy0, hx + hc_w, hy0 + art_h)
-        my = hy0 + art_h + 4
+        my = hy0 + art_h + 5
         draw.text((hx, my), loc, font=F(SANS_BOLD_PATH, 8), fill=REGION_COLORS[reg])
         _cert_badge(draw, hx + hc_w, my - 1, cert)
-        ny = _draw_lines(draw, hx, my + 12, hd, F(SERIF_BOLD_PATH, 14), INK, hc_w, 16, 2)
-        _draw_lines(draw, hx, ny + 2, dk, F(SANS_REG_PATH, 8), MUTED, hc_w, 10, 2)
-        draw.text((hx, hy0 + art_h + 74), "WHY IT MATTERS", font=F(SANS_BOLD_PATH, 7), fill=CRIMSON)
-        draw.text((hx + 72, hy0 + art_h + 74), wim, font=F(SANS_REG_PATH, 8), fill=INK)
+        ny = _draw_lines(draw, hx, my + 14, hd, F(SERIF_BOLD_PATH, 16), INK, hc_w, 18, 2)
+        _draw_lines(draw, hx, ny + 3, dk, F(SANS_REG_PATH, 9), MUTED, hc_w, 12, 2)
+        draw.text((hx, hy0 + art_h + 83), "WHY IT MATTERS", font=F(SANS_BOLD_PATH, 7), fill=CRIMSON)
+        draw.text((hx + 72, hy0 + art_h + 83), wim, font=F(SANS_REG_PATH, 8), fill=INK)
 
-    # 10 Mid Cards (2 x 5 -> #4..#13)
-    draw.line([(14, 365), (1010, 365)], fill=DARK_RULE, width=1)
+    # 8 Spacious Mid Cards (2 x 4 grid -> 240px wide each -> #4..#11)
+    draw.line([(14, 386), (1010, 386)], fill=DARK_RULE, width=1)
     cards = [
-        (4, "S & SE ASIA", "DHAKA · LABOUR", "OFFICIAL", "Bangladesh lifts garment pay 36% to 17,000 taka", "Wage board passes 4–2 hike (12,500->17k). Prothom Alo"),
-        (5, "AFRICA", "GIZA, EGYPT", "OFFICIAL", "Fuel tanker blaze kills at least 31 on ring road", "Overturned tanker explodes in Al-Warraq; 20+ hurt. Health Min"),
-        (6, "EUROPE", "LONDON · ENERGY", "OFFICIAL", "UK energy bills jump 26% to £2,166 from Jan", "Ofgem lifts cap from £1,723 for ~20m homes. Ofgem"),
-        (7, "OCEANIA", "CANBERRA · PACT", "OFFICIAL", "Solomons sign A$740m Australia security pact", "Treaty bars foreign bases in Honiara. DFAT"),
-        (8, "GLOBAL", "UNITED NATIONS", "OFFICIAL", "UNODC: 47,000 women killed by partner/kin", "5 killed/hr globally; Africa 2.9/100k. UNODC"),
-        (9, "EUROPE", "UKRAINE · WAR", "OFFICIAL", "Russian strikes cut power across 5 regions", "Energy grids hit; Zaporizhzhia strained. Kyiv Post"),
-        (10, "AFRICA", "CAPE TOWN · COURT", "OFFICIAL", "High Court voids Phala Phala report", "Bench dissolves impeachment panel. Daily Maverick"),
-        (11, "M. EAST", "JERUSALEM · TRIAL", "OFFICIAL", "Judges urge dropping Netanyahu bribe charge", "Panel cites weak proof in Case 4000. Tol"),
-        (12, "M. EAST", "HODEIDAH · YEMEN", "CONFIRMED", "Coalition hits Hodeidah; Saudis down 4 drones", "Air defences intercept 4 drones over Ras Tanura. AP"),
-        (13, "LAT. AM.", "CARTAGENA · CRIME", "CONFIRMED", "Police storm Éxito store, free 20 hostages", "Dawn raid ends 24-hr siege; 1 captor killed. CBS"),
+        (4, "EUROPE", "LONDON · ENERGY", "OFFICIAL", "UK energy price cap jumps 26% to £2,166", "Ofgem lifts annual household bill from £1,723 (1 Jan). Ofgem"),
+        (5, "N. AFRICA", "GIZA, EGYPT · DISASTER", "OFFICIAL", "Fuel tanker blaze kills at least 31 on ring road", "Overturned truck explodes in Al-Warraq; 20+ hurt. AP"),
+        (6, "EUROPE", "UKRAINE · WAR", "OFFICIAL", "Russian strikes cut power across 5 regions", "Grid attacks put Zaporizhzhia plant on diesel strain. Kyiv Post"),
+        (7, "SOUTH ASIA", "DHAKA · LABOUR", "OFFICIAL", "Bangladesh lifts garment pay 36% to 17,000 tk", "Wage board votes 4–2 up from 12,500 taka. Prothom Alo"),
+        (8, "OCEANIA", "CANBERRA · DIPLOMACY", "OFFICIAL", "Solomon Islands pact bars foreign bases", "A$740m treaty names Australia security partner. DFAT"),
+        (9, "SUB-SAH.", "CAPE TOWN · JUSTICE", "OFFICIAL", "High Court voids Phala Phala report", "Unanimous bench dissolves impeachment panel. Maverick"),
+        (10, "M. EAST", "JERUSALEM · JUSTICE", "OFFICIAL", "Judges urge dropping Netanyahu bribe charge", "Court cites weak proof in Case 4000 bribery trial. ToI"),
+        (11, "LAT. AM.", "CARTAGENA · CRIME", "CONFIRMED", "Colombian forces free all 20 hostages", "Dawn raid ends 24-hr Éxito siege; 1 captor dead. CBS"),
     ]
-    cw = 191
-    c_gap = 10
-    c_art_h = 58
-    row_ys = [370, 492]
+    cw = 240
+    c_gap = 12
+    c_art_h = 66
+    row_ys = [392, 526]
     for idx, (num, reg, loc, cert, hd, dk) in enumerate(cards):
-        r_idx = idx // 5
-        c_idx = idx % 5
+        r_idx = idx // 4
+        c_idx = idx % 4
         cx = 14 + c_idx * (cw + c_gap)
         cy = row_ys[r_idx]
         _draw_mid_art(draw, num, reg, cx, cy, cx + cw, cy + c_art_h)
         ty = cy + c_art_h + 4
-        draw.text((cx, ty), loc, font=F(SANS_BOLD_PATH, 7), fill=REGION_COLORS[reg])
+        draw.text((cx, ty), loc, font=F(SANS_BOLD_PATH, 8), fill=REGION_COLORS[reg])
         _cert_badge(draw, cx + cw, ty - 1, cert)
-        ny = _draw_lines(draw, cx, ty + 10, hd, F(SERIF_BOLD_PATH, 11), INK, cw, 12, 2)
-        _draw_lines(draw, cx, ny + 2, dk, F(SANS_REG_PATH, 8), MUTED, cw, 10, 2)
+        ny = _draw_lines(draw, cx, ty + 14, hd, F(SERIF_BOLD_PATH, 12), INK, cw, 14, 2)
+        _draw_lines(draw, cx, ny + 2, dk, F(SANS_REG_PATH, 8), MUTED, cw, 11, 2)
 
-    # Bottom section: Map (1..13) + 37 Briefs (#14..#50)
-    by0 = 620
+    # Bottom section: Map (1..11) + 24 Readable Briefs (#12..#35)
+    by0 = 664
     draw.line([(14, by0 - 4), (1010, by0 - 4)], fill=DARK_RULE, width=1)
-    draw.text((14, by0 + 1), "WHERE IT HAPPENED · STORIES 1–13", font=F(SANS_BOLD_PATH, 9), fill=INK)
-    _draw_world_map(draw, 14, by0 + 16, 316, 868)
-    leg = [
-        ("EUR 12", "EUROPE"), ("NA 9", "N. AMERICA"), ("ME 7", "M. EAST"),
-        ("AFR 6", "AFRICA"), ("EA 5", "EAST ASIA"), ("OCE 5", "OCEANIA"),
-        ("LAT 3", "LAT. AM."), ("SEA 2", "S & SE ASIA"), ("GL 1", "GLOBAL"),
-    ]
-    for idx, (lbl, reg) in enumerate(leg):
-        lx = 14 + (idx % 3) * 102
-        ly = 875 + (idx // 3) * 12
-        draw.rectangle([lx, ly + 1, lx + 8, ly + 9], fill=REGION_COLORS[reg])
-        draw.text((lx + 11, ly), lbl, font=F(SANS_BOLD_PATH, 8), fill=INK)
+    draw.text((14, by0 + 1), "WHERE IT HAPPENED · STORIES 1–11", font=F(SANS_BOLD_PATH, 9), fill=INK)
+    _draw_world_map(draw, 14, by0 + 16, 316, 846)
 
-    # 37 Briefs (#14..#50) with region color number squares
-    draw.text((330, by0 + 1), "ALSO ON WEDNESDAY — 37 MORE VERIFIED STORIES", font=F(SANS_BOLD_PATH, 9), fill=INK)
-    draw.text((642, by0 + 1), "NUMBERED & COLOUR-MATCHED BY REGION", font=F(SANS_REG_PATH, 8), fill=MUTED)
+    # Region legend below map (2 cols x 5 rows -> no overlap!)
+    for idx, (lbl, cnt, col) in enumerate(segs):
+        lx = 14 + (idx % 2) * 154
+        ly = 852 + (idx // 2) * 12
+        draw.rectangle([lx, ly + 1, lx + 8, ly + 8], fill=col)
+        draw.text((lx + 11, ly), f"{lbl} ({cnt})", font=F(SANS_BOLD_PATH, 7), fill=INK)
 
-    briefs = [
-        (14, "EUROPE", "STRASBOURG:", "EU unveils Quantum Act & €50bn tech fund (O)"),
-        (15, "EUROPE", "SAMARA:", "Ukrainian drones hit Syzran & Kuibyshev refineries (R)"),
-        (16, "N. AMERICA", "WASHINGTON:", "US Q3 real GDP revised up to 4.3% by BEA (O)"),
-        (17, "OCEANIA", "CANBERRA:", "Australia October CPI inflation rises to 4.9% (O)"),
-        (18, "EUROPE", "BRUSSELS:", "Puigdemont sets Dec 12 to end 9-yr Spain exile (C)"),
-        (19, "EUROPE", "LONDON:", "easyJet net profit plunges 96% to £20m on fuel (C)"),
-        (20, "N. AMERICA", "IOWA:", "US Army detonates 5t degraded lead azide safely (O)"),
-        (21, "M. EAST", "HORMUZ:", "IRGC says 2 tankers hit mines & burn in Strait (CLAIM)"),
-        (22, "M. EAST", "JERUSALEM:", "Knesset votes 65–50 for Oct 7 inquiry panel (O)"),
-        (23, "OCEANIA", "ANTARCTICA:", "Shallow M5.9 Balleny quake leads 3 tremors (O)"),
-        (24, "AFRICA", "ENUGU:", "Nollywood icon Pete Edochie dies aged 79 (C)"),
-        (25, "EUROPE", "LONDON:", "Tube strike halts Circle & Piccadilly from 10:00 UTC (C)"),
-        (26, "EUROPE", "LONDON:", "Independent review finds Met Police still racist (O)"),
-        (27, "EUROPE", "BRUSSELS:", "EU sanctions 15 firms tied to Russian arms chain (O)"),
-        (28, "EUROPE", "BERN:", "EU and Switzerland seal updated bilateral pacts (O)"),
-        (29, "EUROPE", "DARMSTADT:", "ESA Hera shows first close-up images of Dimorphos (O)"),
-        (30, "EUROPE", "GENEVA:", "FIDE World Chess: Gukesh & Sindarov draw Game 1 (C)"),
-        (31, "OCEANIA", "CANBERRA:", "Parliament apologises to LGBTQ+ military veterans (O)"),
-        (32, "OCEANIA", "HOBART:", "Flinders Is. bushfire prompts emergency evacuations (O)"),
-        (33, "M. EAST", "DOHA:", "Sooryavanshi, 15, smashes fastest List A 204 off 53b (C)"),
-        (34, "M. EAST", "GAZA CITY:", "Strikes kill at least 4 in Shati camp despite truce (R)"),
-        (35, "M. EAST", "TEHRAN:", "Iran orders winter gas rationing as cold wave hits (R)"),
-        (36, "EAST ASIA", "SHANGHAI:", "Officials pledge loyalty amid Chen Jining probe (R)"),
-        (37, "EAST ASIA", "SEOUL:", "Births jump 12.2% YoY; subway strike averted (O)"),
-        (38, "EAST ASIA", "TAIPEI:", "BBC Verify traces China-linked deepfake campaign (C)"),
-        (39, "AFRICA", "KHARTOUM:", "Sudan rejects Ethiopia peace talks amid clashes (C)"),
-        (40, "AFRICA", "GAUTENG:", "Johannesburg enforces Level-2 water grid curbs (O)"),
-        (41, "AFRICA", "MONROVIA:", "Liberia advances $5.7bn Bea Mountain agreement (C)"),
-        (42, "N. AMERICA", "WASHINGTON:", "NATO chief Rutte holds Mar-a-Lago talks w/ Trump (C)"),
-        (43, "N. AMERICA", "CHICAGO:", "81.5m Thanksgiving travelers face storm delays (C)"),
-        (44, "N. AMERICA", "NEW YORK:", "Dow erases 1,100-pt slide to close slightly higher (C)"),
-        (45, "N. AMERICA", "IOWA / EPA:", "5-mile safety cordon cleared after Army munitions blast (O)"),
-        (46, "N. AMERICA", "WASHINGTON:", "Section 301 hearings set for January over excess capacity (O)"),
-        (47, "N. AMERICA", "OTTAWA:", "Canada reviews Arctic aerospace response protocols (R)"),
-        (48, "LAT. AM.", "BRASÍLIA:", "Brazil permanently recalls ambassador to Argentina (O)"),
-        (49, "LAT. AM.", "CARTAGENA:", "President confirms zero civilian casualties in raid (O)"),
-        (50, "S & SE ASIA", "JAKARTA:", "OECD chief Cormann meets Prabowo on accession (O)"),
-    ]
+    # Inline HOW SURE cleanly below legend
+    draw.text((14, 915), "HOW SURE:", font=F(SANS_BOLD_PATH, 7), fill=INK)
+    lx = 64
+    for cert, desc, bd_c in [
+        ("OFFICIAL", "agency/court", BLUE_OFF),
+        ("CONFIRMED", "2+ outlets", GREEN_CONF),
+        ("CLAIM", "unverified", AMBER_CLAIM),
+    ]:
+        draw.text((lx, 915), cert, font=F(SANS_BOLD_PATH, 7), fill=bd_c)
+        lx += _tw(draw, cert, F(SANS_BOLD_PATH, 7)) + 3
+        draw.text((lx, 915), desc, font=F(SANS_REG_PATH, 7), fill=MUTED)
+        lx += _tw(draw, desc, F(SANS_REG_PATH, 7)) + 5
+
+    # Right 24 Briefs (#12..#35) in 12 crisp readable rows x 2 cols
+    draw.text((330, by0 + 1), "ALSO ON WEDNESDAY 25 NOVEMBER — 24 MORE DATED STORIES", font=F(SANS_BOLD_PATH, 9), fill=INK)
+    draw.text((905, by0 + 1), "every item sourced", font=F(SANS_REG_PATH, 8), fill=MUTED)
+
     col_x = [330, 676]
-    f_num = F(SANS_BOLD_PATH, 7)
-    f_loc = F(SANS_BOLD_PATH, 7)
-    f_txt = F(SANS_REG_PATH, 7)
+    f_num = F(SANS_BOLD_PATH, 8)
+    f_loc = F(SANS_BOLD_PATH, 8)
+    f_txt = F(SANS_REG_PATH, 8)
     for idx, (num, reg, loc, txt) in enumerate(briefs):
-        col_i = 0 if idx < 19 else 1
-        row_i = idx if idx < 19 else idx - 19
+        col_i = idx // 12
+        row_i = idx % 12
         bx = col_x[col_i]
-        by = by0 + 16 + row_i * 15
-        draw.rectangle([bx, by + 1, bx + 13, by + 11], fill=REGION_COLORS[reg])
+        by = by0 + 18 + row_i * 21
+        draw.ellipse([bx, by + 1, bx + 15, by + 16], fill=REGION_COLORS[reg])
         ns = str(num)
-        draw.text((bx + (13 - _tw(draw, ns, f_num)) // 2, by + 2), ns, font=f_num, fill=WHITE)
-        draw.text((bx + 17, by + 2), loc, font=f_loc, fill=INK)
+        draw.text((bx + (15 - _tw(draw, ns, f_num)) // 2, by + 3), ns, font=f_num, fill=WHITE)
+        draw.text((bx + 20, by + 3), loc, font=f_loc, fill=INK)
         lw = _tw(draw, loc, f_loc)
-        draw.text((bx + 20 + lw, by + 2), txt, font=f_txt, fill=MUTED)
+        _draw_lines(draw, bx + 24 + lw, by + 3, txt, f_txt, MUTED, 308 - lw, 10, 1)
 
     # DATE CHECK box
-    dc_y0, dc_y1 = 924, 964
+    dc_y0, dc_y1 = 930, 972
     draw.rectangle([14, dc_y0, 1010, dc_y1], fill=(241, 234, 224), outline=RULE)
     draw.rectangle([14, dc_y0, 19, dc_y1], fill=CRIMSON)
-    draw.text((26, dc_y0 + 5), "DATE CHECK:", font=F(SANS_BOLD_PATH, 8), fill=CRIMSON)
+    draw.text((26, dc_y0 + 6), "DATE CHECK:", font=F(SANS_BOLD_PATH, 8), fill=CRIMSON)
     dc_body = (
-        "Every story above broke or first appeared on Wed 25 Nov 2026 (UTC). Left out as prior days: "
-        "Mon 23 Nov: Huang Nvidia return, West Java gold-pit flood onset, leaked Russia war dead; "
+        "Every story above broke or first appeared on Wed 25 Nov 2026 (UTC). Left out as prior days' news: "
+        "Mon 23 Nov: Huang Nvidia return, West Java gold-pit flood start, leaked Russia war dead; "
         "Tue 24 Nov: WHO Congo Akwe clinic exit, Riyadh PIF strike, CAS Senegal AFCON ruling, Huawei Brooklyn verdict; "
         "Sun 22 Nov: COP31 collapse, 188-drone Kyiv raid."
     )
-    _draw_lines(draw, 94, dc_y0 + 5, dc_body, F(SANS_REG_PATH, 8), INK, 906, 11, 3)
+    _draw_lines(draw, 94, dc_y0 + 6, dc_body, F(SANS_REG_PATH, 8), INK, 906, 11, 3)
 
-    # HOW SURE inline bar & sources
-    lx = 14
-    draw.text((lx, 969), "HOW SURE:", font=F(SANS_BOLD_PATH, 8), fill=INK)
-    lx += _tw(draw, "HOW SURE:", F(SANS_BOLD_PATH, 8)) + 6
-    for cert, desc, bd_c in [
-        ("O / OFFICIAL", "agency or court record", BLUE_OFF),
-        ("C / CONFIRMED", "2+ major outlets", GREEN_CONF),
-        ("R / REPORTED", "single wire", GRAY_REP),
-        ("CLAIM", "one-sided account", AMBER_CLAIM),
-    ]:
-        draw.text((lx, 969), cert, font=F(SANS_BOLD_PATH, 8), fill=bd_c)
-        lx += _tw(draw, cert, F(SANS_BOLD_PATH, 8)) + 4
-        draw.text((lx, 969), desc + "   ", font=F(SANS_REG_PATH, 8), fill=MUTED)
-        lx += _tw(draw, desc + "   ", F(SANS_REG_PATH, 8)) + 4
-
-    draw.text((14, 983), "SOURCES: REUTERS · USTR · BEA · ABS · OFGEM · UNODC · DFAT · XINHUA · PROTHOM ALO · AP · AFP · CBS · ESA · FIDE · YONHAP", font=F(SANS_BOLD_PATH, 7), fill=MUTED)
+    # Sources + bottom strip
+    draw.text((14, 979), "SOURCES: REUTERS · USTR · BEA · ABS · OFGEM · UNODC · DFAT · XINHUA · PROTHOM ALO · AP · AFP · CBS · ESA · FIDE · YONHAP", font=F(SANS_BOLD_PATH, 7), fill=MUTED)
     rt = "Original vector code art · no photos"
-    draw.text((1010 - _tw(draw, rt, F(SANS_REG_PATH, 7)), 983), rt, font=F(SANS_REG_PATH, 7), fill=MUTED)
+    draw.text((1010 - _tw(draw, rt, F(SANS_REG_PATH, 7)), 979), rt, font=F(SANS_REG_PATH, 7), fill=MUTED)
 
     draw.rectangle([0, 998, W, H], fill=INK)
     draw.text((14, 1005), "THE WORLD IN ONE DAY · BUILT FOR MAKE.FUN", font=F(SANS_BOLD_PATH, 8), fill=WHITE)
@@ -713,7 +659,7 @@ def main():
 
     out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "entry.png")
     img.save(out_path, format="PNG", optimize=True)
-    print(f"Generated v7 {out_path}: {os.path.getsize(out_path)} bytes")
+    print(f"Generated v8 {out_path}: {os.path.getsize(out_path)} bytes")
 
 
 if __name__ == "__main__":
